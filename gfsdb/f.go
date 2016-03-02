@@ -7,6 +7,7 @@ import (
 	"github.com/Centny/gwf/util"
 	tmgo "gopkg.in/mgo.v2"
 	"gopkg.in/mgo.v2/bson"
+	"reflect"
 )
 
 func FOI_F(rf *F) (int, error) {
@@ -128,9 +129,10 @@ func (f *FFCM_H) ParseRes(task *dtm.Task, res util.Map) error {
 			log.E("%v", err)
 			return err
 		}
-		mv, ok := proc.Res.(util.Map)
-		if !ok {
-			err = util.Err("parsing result(%v) to map value fail on task(%v),proc(%v)", util.S2Json(proc.Res), task.Id, key)
+		mv := util.MapVal(proc.Res)
+		if mv == nil {
+			err = util.Err("parsing result(%v) as type(%v) to util.Map value fail on task(%v),proc(%v)",
+				util.S2Json(proc.Res), reflect.Indirect(reflect.ValueOf(mv)).Kind().String(), task.Id, key)
 			log.E("%v", err)
 			return err
 		}
