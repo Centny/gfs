@@ -81,7 +81,7 @@ func DoPubDown(pub, path string) error {
 func ReadBase64(path string) (string, error) {
 	var bys, err = ioutil.ReadFile(path)
 	if err == nil {
-		return base64.RawStdEncoding.EncodeToString(bys), nil
+		return base64.StdEncoding.EncodeToString(bys), nil
 	} else {
 		return "", err
 	}
