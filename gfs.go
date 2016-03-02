@@ -9,6 +9,7 @@ import (
 	"github.com/Centny/gwf/routing"
 	"github.com/Centny/gwf/routing/filter"
 	"github.com/Centny/gwf/util"
+	"github.com/Centny/gwf/log"
 )
 
 func RunGFS_C(fcfg *util.Fcfg) error {
@@ -30,10 +31,14 @@ func RunGFS_S(fcfg *util.Fcfg) error {
 		hs.SetVal("uid", fcfg.Val2("uid", "sys"))
 		return routing.HRES_CONTINUE
 	})
-	fsh.Hand("", routing.Shared)
 	err = ffcm.InitDtcmS(fcfg, mdb.DefaultDbc, gfsdb.NewFFCM_H())
 	if err != nil {
 		return err
 	}
-	return ffcm.RunFFCM_S_V(fcfg)
+	ffcm.SRV.Hand("", routing.Shared)
+	fsh.Hand("", routing.Shared)
+	routing.Shared.Print()
+	var listen = fcfg.Val("listen")
+	log.D("listen web server on %v", listen)
+	return routing.ListenAndServe(listen)
 }
