@@ -8,6 +8,7 @@ import (
 	"github.com/Centny/gwf/smartio"
 	"github.com/Centny/gwf/util"
 	"os"
+	"time"
 )
 
 func usage() {
@@ -36,8 +37,9 @@ func main() {
 		fcfg_s.InitWithFilePath2(cfg, true)
 		fcfg_s.Print()
 		redirect_l(fcfg_s)
-		defer smartio.ResetStd()
 		fmt.Println(gfs.RunGFS_C(fcfg_s))
+		smartio.ResetStd()
+		time.Sleep(time.Second)
 	case "-s":
 		var cfg = "conf/gfs_s.properties"
 		if len(os.Args) > 2 {
@@ -47,8 +49,9 @@ func main() {
 		fcfg_s.InitWithFilePath2(cfg, true)
 		fcfg_s.Print()
 		redirect_l(fcfg_s)
-		defer smartio.ResetStd()
 		fmt.Println(gfs.RunGFS_S(fcfg_s))
+		smartio.ResetStd()
+		time.Sleep(time.Second)
 	case "-u":
 		if len(os.Args) < 4 {
 			usage()
