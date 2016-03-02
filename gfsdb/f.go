@@ -129,10 +129,10 @@ func (f *FFCM_H) ParseRes(task *dtm.Task, res util.Map) error {
 			log.E("%v", err)
 			return err
 		}
-		mv := util.MapVal(proc.Res)
-		if mv == nil {
+		mv, ok := MapVal(proc.Res)
+		if !ok {
 			err = util.Err("parsing result(%v) as type(%v) to util.Map value fail on task(%v),proc(%v)",
-				util.S2Json(proc.Res), reflect.Indirect(reflect.ValueOf(mv)).Kind().String(), task.Id, key)
+				util.S2Json(proc.Res), reflect.ValueOf(proc.Res).Type().String(), task.Id, key)
 			log.E("%v", err)
 			return err
 		}
@@ -157,4 +157,27 @@ func (f *FFCM_H) OnDone(dtcm *dtm.DTCM_S, task *dtm.Task) error {
 		info["error"] = err.Error()
 	}
 	return SetInfoF(task.Id, info)
+}
+
+func MapVal(v interface{}) (util.Map, bool) {
+	var res, ok = MapValV(v).(util.Map)
+	return res, ok
+}
+
+func MapValV(v interface{}) interface{} {
+	if bv, ok := v.(bson.M); ok {
+		var res = util.Map{}
+		for key, val := range bv {
+			res[key] = MapValV(val)
+		}
+		return res
+	} else if mv, ok := v.(map[string]interface{}); ok {
+		var res = util.Map{}
+		for key, val := range mv {
+			res[key] = MapValV(val)
+		}
+		return res
+	} else {
+		return v
+	}
 }
