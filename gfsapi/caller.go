@@ -25,7 +25,6 @@ func DoUpF(file, name, mark, tags, folder, desc string, pub int) (util.Map, erro
 	if err != nil {
 		return nil, err
 	}
-	fmt.Println(res)
 	if res.IntVal("code") == 0 {
 		return res.MapVal("data"), nil
 	} else {
