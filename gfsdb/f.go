@@ -7,6 +7,7 @@ import (
 	"github.com/Centny/gwf/util"
 	tmgo "gopkg.in/mgo.v2"
 	"gopkg.in/mgo.v2/bson"
+	"path/filepath"
 	"reflect"
 )
 
@@ -42,7 +43,7 @@ func FOI_F(rf *F) (int, error) {
 		return 1, nil
 	}
 	var out = CreateOutPath(rf)
-	err = ffcm.SRV.AddTaskV(rf.Id, rf.Id, rf.Path, out)
+	err = ffcm.SRV.AddTaskV(rf.Id, rf.Id, rf.Path, out, filepath.Ext(rf.Path))
 	if err == nil {
 		log.D("FOI_F adding really file(%v) on path(%v) success with ffcm task out path(%v)", rf.Id, rf.Path, out)
 	} else if dtm.IsNotMatchedErr(err) {
