@@ -36,6 +36,7 @@ func main() {
 		fcfg_s.InitWithFilePath2(cfg, true)
 		fcfg_s.Print()
 		redirect_l(fcfg_s)
+		defer smartio.ResetStd()
 		fmt.Println(gfs.RunGFS_C(fcfg_s))
 	case "-s":
 		var cfg = "conf/gfs_s.properties"
@@ -46,6 +47,7 @@ func main() {
 		fcfg_s.InitWithFilePath2(cfg, true)
 		fcfg_s.Print()
 		redirect_l(fcfg_s)
+		defer smartio.ResetStd()
 		fmt.Println(gfs.RunGFS_S(fcfg_s))
 	case "-u":
 		if len(os.Args) < 4 {
