@@ -5,7 +5,6 @@ import (
 	"github.com/Centny/ffcm"
 	"github.com/Centny/gfs/gfsdb"
 	"github.com/Centny/gwf/log"
-	"github.com/Centny/gwf/netw/dtm"
 	"github.com/Centny/gwf/routing"
 	"github.com/Centny/gwf/util"
 	"path/filepath"
@@ -101,6 +100,68 @@ func NewFSH2(fcfg *util.Fcfg) (*FSH, error) {
 func (f *FSH) AddSender(alias string, s FSedner) {
 	f.SenderL[alias] = s
 }
+
+//File Info
+//Get the file information by file id/mark/sha/md5,
+//the file informantion container file normal info like SHA1,MD5,size and the extern file info.
+//
+//@url,normal http get request
+//	~/pub/api/info?fid=xxx		GET
+//@arg,the normal query arguments, at least one arguments is setted on fid/mark/sha/md5
+//	fid		O	the file id
+//	mark	O	the file mark, it is specified when file is uploaded
+//	sha		O	the file SHA.
+//	md5		O	the file MD5.
+//	~/pub/api/info?fid=xxx
+//@ret,code/data return
+//	base			O	the file base information
+//	exec			O	the converter executing information, not this field when the task is not started/done or get task status fail.
+//	err				S	the error inforamtion when get converter task status fail.
+//	exec.total		F	the converter task process rate
+//	exec.detail		O	the sub task process rate
+//	base.filename 	S	the uploaed file name
+//	base.id			S	the file id
+//	base.mark		A	the file mark list.
+//	base.md5		S	the file MD5 hash
+//	base.name		S	the special name
+//	base.sha		S	the file SHA1 hash.
+//	base.size		I	the file size.
+//	base.time		I	the file upload time
+//	base.type		S	the file mime type.
+//	base.pub		S	the file public path.
+/*	the example
+	{
+		"code": 0,
+		"data": {
+			"exec": {
+				"detail": {
+					"V_json": 0,
+					"V_pc": 0
+				},
+				"total": 0
+			},
+			"base": {
+				"exec": "running",
+				"ext": ".mp4",
+				"filename": "../../ffcm/xx.mp4",
+				"id": "56d9a4eec3666e4e02af307f",
+				"info": {},
+				"mark": ["xxa"],
+				"md5": "52757d83284ca0967bc0c9e2be342c13",
+				"name": "../../ffcm/xx.mp4",
+				"path": "www/u_56d9a4eec3666e4e02000001.mp4",
+				"pub": "F/bDRYOA==",
+				"sha": "226cf3e82860ea778ccae40a9e424be5700249e1",
+				"size": 431684,
+				"status": "N",
+				"time": 1.457104110367e+12,
+				"type": "application/octet-stream"
+			}
+		}
+	}
+*/
+//@tag,file,info
+//@author,cny,2016-03-05
 func (f *FSH) Info(hs *routing.HTTPSession) routing.HResult {
 	var err error
 	var fid, sha, md5, mark string
@@ -125,23 +186,25 @@ func (f *FSH) Info(hs *routing.HTTPSession) routing.HResult {
 		log.E("%v", err)
 		return hs.MsgResErr2(1, "srv-err", err)
 	}
-	if ffcm.SRV == nil {
+	log.D("FSH query file info by fid(%v)/sha(%v)/md5(%v)/mark(%v) success", fid, sha, md5, mark)
+	if file.Exec != gfsdb.ES_RUNNING || ffcm.SRV == nil {
 		return hs.MsgRes(util.Map{
-			"file": file,
+			"base": file,
 		})
 	}
-	var task *dtm.Task
-	task, err = ffcm.SRV.Db.Find(file.Id)
+	log.D("FSH query file convert info by fid(%v)", fid)
+	total, res, err := ffcm.SRV.TaskRate(file.Id)
 	if err == nil {
 		return hs.MsgRes(util.Map{
-			"file": file,
-			"task": task,
+			"base": file,
+			"exec": util.Map{
+				"total":  total,
+				"detail": res,
+			},
 		})
 	} else {
-		err = util.Err("FSH find task by id (%v) error->%v", file.Id, err)
-		log.E("%v", err)
 		return hs.MsgRes(util.Map{
-			"file": file,
+			"base": file,
 			"err":  err,
 		})
 	}

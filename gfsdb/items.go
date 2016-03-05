@@ -4,6 +4,13 @@ import (
 	"github.com/Centny/gwf/util"
 )
 
+const (
+	ES_RUNNING = "running"
+	ES_DONE    = "done"
+	ES_ERROR   = "error"
+	ES_NONE    = "none"
+)
+
 type F struct {
 	Id       string   `bson:"_id" json:"id"`
 	Name     string   `bson:"name" json:"name"`
@@ -15,8 +22,9 @@ type F struct {
 	Size     int64    `bson:"size" json:"size"`         //file size.
 	Type     string   `bson:"type" json:"type"`         //mimetype
 	Path     string   `bson:"path" json:"path"`         //file save path.
-	Mark     []string `bson:"mark" json:"mark"`         //file save path.
-	Info     util.Map `bson:"info" json:"info"`         //file save path.
+	Mark     []string `bson:"mark" json:"mark"`         //file marks
+	Exec     string   `bson:"exec" json:"exec"`         //the exec status
+	Info     util.Map `bson:"info" json:"info"`         //the extern info.
 	Status   string   `bson:"status" json:"status"`     //file status
 	Time     int64    `bson:"time" json:"time"`         //upload time.
 }

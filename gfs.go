@@ -6,10 +6,10 @@ import (
 	"github.com/Centny/ffcm/mdb"
 	"github.com/Centny/gfs/gfsapi"
 	"github.com/Centny/gfs/gfsdb"
+	"github.com/Centny/gwf/log"
 	"github.com/Centny/gwf/routing"
 	"github.com/Centny/gwf/routing/filter"
 	"github.com/Centny/gwf/util"
-	"github.com/Centny/gwf/log"
 )
 
 func RunGFS_C(fcfg *util.Fcfg) error {
@@ -35,7 +35,7 @@ func RunGFS_S(fcfg *util.Fcfg) error {
 	if err != nil {
 		return err
 	}
-	ffcm.SRV.Hand("", routing.Shared)
+	ffcm.SRV.Hand("/adm", routing.Shared)
 	fsh.Hand("", routing.Shared)
 	routing.Shared.Print()
 	var listen = fcfg.Val("listen")

@@ -7,12 +7,12 @@ import (
 	"github.com/Centny/ffcm"
 	"github.com/Centny/gfs/gfsdb"
 	_ "github.com/Centny/gfs/test"
-	"github.com/Centny/gwf/netw/dtm"
 	"github.com/Centny/gwf/routing"
 	"github.com/Centny/gwf/routing/filter"
 	"github.com/Centny/gwf/routing/httptest"
 	"github.com/Centny/gwf/util"
 	tmgo "gopkg.in/mgo.v2"
+	"gopkg.in/mgo.v2/bson"
 	"os"
 	"runtime"
 	"strings"
@@ -29,6 +29,7 @@ func init() {
 		}()
 		SrvAddr()
 	}()
+	gfsdb.C = mgo.C
 }
 
 func TestUpDown(t *testing.T) {
@@ -76,6 +77,7 @@ func TestUpDown(t *testing.T) {
 		t.Error(err.Error())
 		return
 	}
+	fmt.Println(util.S2Json(res))
 	// fmt.Println(util.S2Json(res))
 	var fid = res.StrValP("/base/id")
 	var sha = res.StrValP("/base/sha")
@@ -88,6 +90,7 @@ func TestUpDown(t *testing.T) {
 	}
 	//
 	//test file id
+	time.Sleep(1 * time.Second)
 	var ff_srv = ffcm.SRV
 	ffcm.SRV = nil
 	res, err = DoInfo(fid, "", "", "")
@@ -95,11 +98,14 @@ func TestUpDown(t *testing.T) {
 		t.Error(err.Error())
 		return
 	}
-	if res.Val("task") != nil {
+	fmt.Println(util.S2Json(res))
+	if res.Val("exec") != nil {
 		t.Error("error")
 		return
 	}
 	ffcm.SRV = ff_srv
+	//
+	//test file id
 	res, err = DoInfo(fid, "", "", "")
 	if err != nil {
 		t.Error(err.Error())
@@ -120,6 +126,7 @@ func TestUpDown(t *testing.T) {
 		t.Error("error")
 		return
 	}
+	fmt.Println(util.S2Json(res))
 	//
 	//test file hash
 	res, err = DoInfo("", sha, "", "")
@@ -131,19 +138,31 @@ func TestUpDown(t *testing.T) {
 		t.Error("error")
 		return
 	}
+	fmt.Println(util.S2Json(res))
 	//
 	//wait task done..
+	var check_c = 0
 	for {
-		var rt, err = gfsdb.FindF(fid)
+		res, err = DoInfo(fid, "", "", "")
 		if err != nil {
 			t.Error(err.Error())
 			return
 		}
-		fmt.Println("waiting result...")
-		if len(rt.Info) > 0 {
+		if fid != res.StrValP("/file/id") {
+			t.Error("error")
+			return
+		}
+		fmt.Println(util.S2Json(res))
+		res = res.MapVal("exec")
+		if res == nil {
 			break
 		}
+		check_c += 1
 		time.Sleep(time.Second)
+	}
+	if check_c < 1 {
+		t.Error("error")
+		return
 	}
 	//
 	//test download file
@@ -309,25 +328,37 @@ func TestUpDown(t *testing.T) {
 	}
 	tsh.Base.(*FBaseImpl).Base = "."
 	//
-	ffcm.SRV.Db.(*dtm.MemH).Errs["Find"] = util.Err("mock error")
-	res, _ = DoInfo(fid, "", "", "")
+	// ffcm.SRV.Db.(*dtm.MemH).Errs["Find"] = util.Err("mock error")
+	// res, _ = DoInfo(fid, "", "", "")
+	// if res.Val("err") == nil {
+	// 	t.Error("error")
+	// 	return
+	// }
+	// ffcm.SRV.Db.(*dtm.MemH).Errs["Find"] = nil
+	//
+	res, err = DoInfo("", "", "", "")
+	if err == nil {
+		t.Error("error")
+		return
+	}
+	//
+	res, err = DoInfo("xdsds", "", "", "")
+	if err == nil {
+		t.Error("error")
+		return
+	}
+	//
+	gfsdb.UpdateF(fid, bson.M{"exec": gfsdb.ES_RUNNING})
+	res, err = DoInfo(fid, "", "", "")
+	if err != nil {
+		t.Error("error")
+		return
+	}
 	if res.Val("err") == nil {
 		t.Error("error")
 		return
 	}
-	ffcm.SRV.Db.(*dtm.MemH).Errs["Find"] = nil
-	//
-	res, _ = DoInfo("", "", "", "")
-	if res.IntVal("code") == 0 {
-		t.Error("error")
-		return
-	}
-	//
-	res, _ = DoInfo("xdsds", "", "", "")
-	if res.IntVal("code") == 0 {
-		t.Error("error")
-		return
-	}
+	gfsdb.UpdateF(fid, bson.M{"exec": gfsdb.ES_DONE})
 	//
 	err = DoFileDown("", "", "", 0, "kksfsd.xx")
 	if err == nil {
@@ -354,6 +385,12 @@ func TestUpDown(t *testing.T) {
 	}
 	//
 	err = DoPubDown("/kfsd/sd", "kjdsf.xx")
+	if err == nil {
+		t.Error("error")
+		return
+	}
+	//
+	err = DoPubDown("/kfsd", "kjdsf.xx")
 	if err == nil {
 		t.Error("error")
 		return

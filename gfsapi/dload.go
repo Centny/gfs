@@ -11,6 +11,24 @@ import (
 	"strings"
 )
 
+//File Download(Private)
+//Download file by file id or file mark, It always is used to download private file.
+//it can be intercepted by filter.AttrFilter to do access control.
+//
+//
+//@url,normal http get request
+//	~/usr/api/dload?fid=xxx		GET
+//@arg,the normal query arguments, at least one arguments is setted on fid/mark
+//	fid		O	the file id
+//	mark	O	the file mark, it is specified when file is uploaded
+//	dl		O	force download file, not open in browser, default is 0, 1 is forced.
+//	type	O	the extern file type, it always is used to download extern file which is created by convert task.
+//	idx		O	the extern file index on file list, default is 0.
+//	~/usr/api/dload?fid=xxx&type=Abc&idx=1&dl=1
+//@ret,normal http file stream return.
+//	not example.
+//@tag,file,download,private
+//@author,cny,2016-03-04
 func (f *FSH) Down(hs *routing.HTTPSession) routing.HResult {
 	var etype, mark, fid string
 	var dl, idx int = 0, 0
@@ -44,6 +62,19 @@ func (f *FSH) Down(hs *routing.HTTPSession) routing.HResult {
 	return f.DoSend(hs, rf, etype, dl == 1, idx)
 }
 
+//File Download(Public)
+//Download file by file public path, It always is used to download public file.
+//
+//
+//@url,normal http get request
+//	~/<public path>/<extern type>/<file index>		GET
+//@arg,the normal query path,
+//	dl		O	force download file, not open in browser, default is 0, 1 is forced.
+//	~/F/F/bDRYOA==.jpg?dl=1
+//@ret,normal http file stream return.
+//	not example.
+//@tag,file,download,public
+//@author,cny,2016-03-04
 func (f *FSH) Pub(hs *routing.HTTPSession) routing.HResult {
 	var path = strings.Trim(hs.R.URL.Path, "/ \t")
 	if len(path) < 1 {

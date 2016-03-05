@@ -19,6 +19,7 @@ func FOI_F(rf *F) (int, error) {
 		return 0, util.Err("FOI_F the F.sha/F.md5 is empty ")
 	}
 	rf.Id = bson.NewObjectId().Hex()
+	rf.Exec = ES_NONE
 	var res, err = C(CN_F).Find(bson.M{
 		"$or": []bson.M{
 			bson.M{"sha": rf.SHA},
@@ -49,7 +50,13 @@ func FOI_F(rf *F) (int, error) {
 	} else if dtm.IsNotMatchedErr(err) {
 		log.D("FOI_F adding really file(%v) on path(%v) success with not ffcm task matched", rf.Id, rf.Path)
 	} else {
-		log.E("FOI_F adding really file(%v) on path(%v) success, but add ffcm task to out path(%v) error->%v", rf.Id, rf.Path, out, err)
+		log.E("FOI_F adding really file(%v) on path(%v) success, but add ffcm task to out path(%v) error->%v, will mark it to exec error", rf.Id, rf.Path, out, err)
+		err = UpdateExecF(rf.Id, ES_ERROR)
+		if err == nil {
+			log.D("FOI_F mark really file(%v) to exec error success")
+		} else {
+			log.E("FOI_F mark really file(%v) to exec error fail with error->%v", rf.Id, err)
+		}
 	}
 	return res.Updated, nil
 }
@@ -72,8 +79,8 @@ func CountF() (int, error) {
 	return C(CN_F).Count()
 }
 
-func SetInfoF(id string, info util.Map) error {
-	return C(CN_F).UpdateId(id, bson.M{"$set": bson.M{"info": info}})
+func UpdateF(id string, set bson.M) error {
+	return C(CN_F).UpdateId(id, bson.M{"$set": set})
 }
 
 func FindFv(query bson.M) (*F, error) {
@@ -113,6 +120,16 @@ func FindPubF(pub string) (*F, error) {
 	})
 }
 
+func UpdateExecF(id, es string) error {
+	return C(CN_F).Update(
+		bson.M{"_id": id},
+		bson.M{
+			"$set": bson.M{
+				"exec": es,
+			},
+		})
+}
+
 type FFCM_H struct {
 }
 
@@ -120,7 +137,12 @@ func NewFFCM_H() *FFCM_H {
 	return &FFCM_H{}
 }
 func (f *FFCM_H) OnStart(dtcm *dtm.DTCM_S, task *dtm.Task) {
-
+	var err = UpdateF(task.Id, bson.M{"exec": ES_RUNNING})
+	if err == nil {
+		log.D("FFCM_H update task(%v) exec status to %v", task.Id, ES_RUNNING)
+	} else {
+		log.E("FFCM_H update task(%v) exec status to %v fail with error->%v", task.Id, ES_RUNNING, err)
+	}
 }
 func (f *FFCM_H) ParseRes(task *dtm.Task, res util.Map) error {
 	var err error
@@ -157,7 +179,10 @@ func (f *FFCM_H) OnDone(dtcm *dtm.DTCM_S, task *dtm.Task) error {
 		info["code"] = 1
 		info["error"] = err.Error()
 	}
-	return SetInfoF(task.Id, info)
+	return UpdateF(task.Id, bson.M{
+		"info": info,
+		"exec": ES_DONE,
+	})
 }
 
 func MapVal(v interface{}) (util.Map, bool) {

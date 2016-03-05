@@ -12,6 +12,80 @@ import (
 	"strings"
 )
 
+//File Upload
+//Upload file by multipart file or base64 body.
+//
+//the argument container two path the http body and query parameter.
+//
+//the body can use two mode in multipart/base64.
+//
+//the http request content type must be setted as multipart/form-data when using multipart mode.
+//
+//the http request content type must be setted as data contenty type, when using the base64 mode.
+//
+//@url,http post
+//	~/usr/api/uload		POST	multipart/form-data
+//@arg,the normal query arguments, at least one arguments is setted on fid/mark/sha/md5
+//	pub		O	whether create public path
+//	base64	O	using bas64 upload mode, default is 0.
+//	name	O	specie the file name.
+//	mark	O	add mark to file.
+//	tags	O	add tag to file, split by comma
+//	desc	O	the file description.
+//	folder	O	special the folder where the fill will be stored.
+//	~/usr/api/uload?pub=1&name=xxx.mp4&mark=xxa
+//@ret,code/data return
+//	base			O	the file base information, see the /pub/api/info for the detail.
+//	added			I	whether the file be added.
+//	file			O	the file information to user.
+//	url				S	the public url.
+//	file.id			S	the file id
+//	file.folder		S	the folder id.
+//	file.name		S	the special name
+//	file.oid		S	the owner id
+//	file.owner		S	the owner type.
+//	file.tags		A	the file tag.
+/*
+	The json example result when success.
+	{
+		"code": 0,
+		"data": {
+			"added": 1,
+			"base": {
+				"exec": "running",
+				"ext": ".mp4",
+				"filename": "../../ffcm/xx.mp4",
+				"id": "56da302dc3666e525fd7b05d",
+				"info": {},
+				"mark": ["xxa"],
+				"md5": "52757d83284ca0967bc0c9e2be342c13",
+				"name": "../../ffcm/xx.mp4",
+				"path": "www/u_56da302dc3666e525f000001.mp4",
+				"pub": "F/=uXWqA==",
+				"sha": "226cf3e82860ea778ccae40a9e424be5700249e1",
+				"size": 431684,
+				"status": "N",
+				"time": 1.457139757875e+12,
+				"type": "application/octet-stream"
+			},
+			"file": {
+				"desc": "desc",
+				"fid": "56da302dc3666e525fd7b05d",
+				"floder": "56da302ac3666e525fd7b05c",
+				"id": "56da302dc3666e525fd7b05e",
+				"name": "../../ffcm/xx.mp4",
+				"oid": "123",
+				"owner": "USR",
+				"status": "N",
+				"tags": ["x", "y", "z"],
+				"time": 1.457139757961e+12
+			},
+			"url": "http://127.0.0.1:57013/F/=uXWqA=="
+		}
+	}
+*/
+//@tag,file,upload
+//@author,cny,2016-03-05
 func (f *FSH) Up(hs *routing.HTTPSession) routing.HResult {
 	var (
 		pub, base64                    int = 0, 0
