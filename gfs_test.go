@@ -30,14 +30,14 @@ func TestSrv(t *testing.T) {
 		t.Error("error")
 		return
 	}
-	fcfg.SetVal("db_con", "cny:123@loc.w:27017/cny")
+	fcfg.SetVal("db_con", "cny:123@loc.m:27017/cny")
 	fcfg.SetVal("db_name", "cny")
 	err = RunGFS_S(fcfg)
 	if err == nil {
 		t.Error("error")
 		return
 	}
-	fcfg.SetVal("db_con", "cny:123@loc.w:27017/cny")
+	fcfg.SetVal("db_con", "cny:123@loc.m:27017/cny")
 	fcfg.SetVal("db_name", "cny")
 	fcfg.SetVal("sender_l", "sdfs")
 	err = RunGFS_S(fcfg)
