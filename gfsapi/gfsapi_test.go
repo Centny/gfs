@@ -111,7 +111,7 @@ func TestUpDown(t *testing.T) {
 		t.Error(err.Error())
 		return
 	}
-	if fid != res.StrValP("/file/id") {
+	if fid != res.StrValP("/base/id") {
 		t.Error("error")
 		return
 	}
@@ -122,7 +122,7 @@ func TestUpDown(t *testing.T) {
 		t.Error(err.Error())
 		return
 	}
-	if fid != res.StrValP("/file/id") {
+	if fid != res.StrValP("/base/id") {
 		t.Error("error")
 		return
 	}
@@ -134,7 +134,7 @@ func TestUpDown(t *testing.T) {
 		t.Error(err.Error())
 		return
 	}
-	if fid != res.StrValP("/file/id") {
+	if fid != res.StrValP("/base/id") {
 		t.Error("error")
 		return
 	}
@@ -148,7 +148,7 @@ func TestUpDown(t *testing.T) {
 			t.Error(err.Error())
 			return
 		}
-		if fid != res.StrValP("/file/id") {
+		if fid != res.StrValP("/base/id") {
 			t.Error("error")
 			return
 		}
@@ -282,7 +282,7 @@ func TestUpDown(t *testing.T) {
 		t.Error(err.Error())
 		return
 	}
-	if fid != res.StrValP("/file/id") {
+	if fid != res.StrValP("/base/id") {
 		t.Error("error")
 		return
 	}

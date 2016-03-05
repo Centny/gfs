@@ -9,6 +9,7 @@ import (
 	"github.com/Centny/gwf/tutil"
 	"github.com/Centny/gwf/util"
 	tmgo "gopkg.in/mgo.v2"
+	"gopkg.in/mgo.v2/bson"
 	"regexp"
 	"runtime"
 	"testing"
@@ -215,4 +216,34 @@ func TestFFCM_H_err(t *testing.T) {
 		t.Error("error")
 		return
 	}
+	//
+	ffcm.OnStart(nil, &dtm.Task{
+		Id: "xkssdf",
+	})
+	//
+	update_exec(&F{
+		Id: "sss",
+	})
+}
+
+func TestMapValV(t *testing.T) {
+	var mv, ok = MapVal(map[string]interface{}{
+		"xa": util.Map{
+			"a1": 1,
+			"b1": 2,
+		},
+		"xb": bson.M{
+			"a2": "1",
+			"b2": "2",
+		},
+		"xc": map[string]interface{}{
+			"a2": "1",
+			"b2": "2",
+		},
+	})
+	if !ok {
+		t.Error("error")
+		return
+	}
+	fmt.Println(util.S2Json(mv))
 }

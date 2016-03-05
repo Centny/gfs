@@ -51,14 +51,19 @@ func FOI_F(rf *F) (int, error) {
 		log.D("FOI_F adding really file(%v) on path(%v) success with not ffcm task matched", rf.Id, rf.Path)
 	} else {
 		log.E("FOI_F adding really file(%v) on path(%v) success, but add ffcm task to out path(%v) error->%v, will mark it to exec error", rf.Id, rf.Path, out, err)
-		err = UpdateExecF(rf.Id, ES_ERROR)
-		if err == nil {
-			log.D("FOI_F mark really file(%v) to exec error success")
-		} else {
-			log.E("FOI_F mark really file(%v) to exec error fail with error->%v", rf.Id, err)
-		}
+		update_exec(rf)
 	}
 	return res.Updated, nil
+}
+
+func update_exec(rf *F) error {
+	var err = UpdateExecF(rf.Id, ES_ERROR)
+	if err == nil {
+		log.D("FOI_F mark really file(%v) to exec error success")
+	} else {
+		log.E("FOI_F mark really file(%v) to exec error fail with error->%v", rf.Id, err)
+	}
+	return err
 }
 
 func AddMarkF(id string, mark []string) (*F, error) {

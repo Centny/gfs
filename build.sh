@@ -7,20 +7,26 @@ export PATH=$PATH:$GOPATH/bin:$HOME/bin:$GOROOT/bin
 ##############################
 ######Install Dependence######
 echo "Installing Dependence"
-#go get github.com/go-sql-driver/mysql
-#go get github.com/Centny/TDb
-#go get code.google.com/p/go-uuid/uuid
+if [ "$1" = "-u" ];then
+ twd=`pwd`
+ echo "Running Clear"
+ cd  $GOPATH/src/github.com/Centny/gfs/
+ git pull
+ cd $twd
+fi
 ##############################
 #########Running Clear#########
 #########Running Test#########
 echo "Running Test"
 pkgs="\
+ github.com/Centny/gfs/gfsapi\
+"
+pkgs="\
+ github.com/Centny/gfs/gfsdb\
+ github.com/Centny/gfs/gfsapi\
+ github.com/Centny/gfs\
  github.com/Centny/gfs/gfs\
 "
-# pkgs="\
-#  github.com/Centny/gfs/gfsdb\
-#  github.com/Centny/gfs/gfsapi\
-# "
 echo "mode: set" > a.out
 for p in $pkgs;
 do
