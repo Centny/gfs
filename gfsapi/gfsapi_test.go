@@ -15,6 +15,7 @@ import (
 	"gopkg.in/mgo.v2/bson"
 	"os"
 	"runtime"
+	"strconv"
 	"strings"
 	"testing"
 	"time"
@@ -570,4 +571,9 @@ sender=dekk
 		t.Error("error")
 		return
 	}
+}
+
+func TestXX(t *testing.T) {
+	fmt.Println(strconv.ParseUint("0777", 8, 32))
+	fmt.Println(uint32(os.ModePerm))
 }

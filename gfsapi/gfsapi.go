@@ -7,6 +7,7 @@ import (
 	"github.com/Centny/gwf/log"
 	"github.com/Centny/gwf/routing"
 	"github.com/Centny/gwf/util"
+	"os"
 	"path/filepath"
 	"strings"
 )
@@ -64,6 +65,7 @@ type FSH struct {
 	Base    FBase
 	Key     string
 	Host    string
+	Mode    os.FileMode
 	SenderL map[string]FSedner
 }
 
@@ -71,6 +73,7 @@ func NewFSH(base FBase) *FSH {
 	return &FSH{
 		Base:    base,
 		Key:     "file",
+		Mode:    os.ModePerm,
 		SenderL: map[string]FSedner{},
 	}
 }
@@ -84,6 +87,7 @@ func NewFSH2(fcfg *util.Fcfg) (*FSH, error) {
 	var subs_c = impl.ParseSubs(fcfg, subs)
 	var fsh = NewFSH(impl)
 	fsh.Host = host
+	fsh.Mode = fcfg.FileModeV("mode", os.ModePerm)
 	var sender_l = fcfg.Val2("sender_l", "")
 	if len(sender_l) > 0 {
 		var ss, err = ParseSenderL(fcfg, strings.Split(sender_l, ","))
