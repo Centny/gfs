@@ -19,17 +19,28 @@ import (
 func TestF(t *testing.T) {
 	runtime.GOMAXPROCS(util.CPU())
 	mgo.C(CN_F).RemoveAll(nil)
+	mgo.C(CN_MARK).RemoveAll(nil)
 	var do_f = func(i int) int {
 		var rt = &F{
 			Path: "xxx",
 			SHA:  "abc",
 			MD5:  "xyz",
 			Pub:  "/s",
-			Mark: []string{"jkk"},
 		}
 		var updated, err = FOI_F(rt)
 		if err != nil {
 			t.Error(err.Error())
+			return 0
+		}
+		// fmt.Println(rt.Id)
+		mk, err := FOI_Mark("jjk0", rt.Id)
+		if err != nil {
+			t.Error(err.Error())
+			return 0
+		}
+		if mk.Fid != rt.Id {
+			fmt.Println(mk.Fid, mk.Id)
+			t.Error("error")
 			return 0
 		}
 		return updated
@@ -62,7 +73,7 @@ func TestF(t *testing.T) {
 		t.Error(err.Error())
 		return
 	}
-	_, err = FindMarkF(rt.Mark[0])
+	_, err = FindMarkF("jjk0")
 	if err != nil {
 		t.Error(err.Error())
 		return
@@ -72,7 +83,12 @@ func TestF(t *testing.T) {
 		t.Error("error")
 		return
 	}
-	_, err = AddMarkF(rt.Id, []string{"kjj"})
+	mk, err := FOI_Mark("jjk0", "xxds")
+	if mk.Fid != rt.Id {
+		t.Error("error")
+		return
+	}
+	_, err = FOI_Mark("kjj", rt.Id)
 	if err != nil {
 		t.Error(err.Error())
 		return
@@ -127,14 +143,12 @@ func TestFFCM(t *testing.T) {
 		Path: "xx.mp4",
 		SHA:  "abc",
 		MD5:  "xyz",
-		Mark: []string{"jkk"},
 	}
 	ffcm.SRV.Db.(*dtm.MemH).Errs["Add"] = util.Err("mock error")
 	var _, err = FOI_F(&F{
 		Path: "xxkjk.mp4",
 		SHA:  "abcsd",
 		MD5:  "xyzfd",
-		Mark: []string{"jkk"},
 	})
 	if err != nil {
 		t.Error("error")
@@ -151,7 +165,6 @@ func TestFFCM(t *testing.T) {
 		Path: "XXXX",
 		SHA:  "abcx",
 		MD5:  "xyzx",
-		Mark: []string{"jkk"},
 	})
 	if err != nil {
 		t.Error(err.Error())

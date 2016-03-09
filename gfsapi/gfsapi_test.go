@@ -83,7 +83,7 @@ func TestUpDown(t *testing.T) {
 	var fid = res.StrValP("/base/id")
 	var sha = res.StrValP("/base/sha")
 	var pub = res.StrValP("/base/pub")
-	// var url = res.StrValP("/url")
+	var url = res.StrValP("/url")
 	var path = res.StrValP("/base/path")
 	if len(fid) < 1 || len(sha) < 1 || len(pub) < 1 {
 		t.Error("fid is empty")
@@ -142,6 +142,7 @@ func TestUpDown(t *testing.T) {
 	fmt.Println(util.S2Json(res))
 	//
 	//wait task done..
+	time.Sleep(1 * time.Second)
 	var check_c = 0
 	for {
 		res, err = DoInfo(fid, "", "", "")
@@ -154,14 +155,46 @@ func TestUpDown(t *testing.T) {
 			return
 		}
 		fmt.Println(util.S2Json(res))
-		res = res.MapVal("exec")
-		if res == nil {
+		if res.MapVal("exec") == nil {
+			var info = res.MapValP("/base/info")
+			if info == nil || len(info) < 1 { //convert fail
+				t.Error("error")
+				return
+			}
 			break
 		}
 		check_c += 1
 		time.Sleep(time.Second)
 	}
 	if check_c < 1 {
+		t.Error("error")
+		return
+	}
+
+	//upload sample file
+	res_2, err := DoUpF("../../ffcm/xx.mp4", "", "xxa", "x,y,z", folder.Id, "desc", 1)
+	if err != nil {
+		t.Error(err.Error())
+		return
+	}
+	if res_2.IntVal("added") != 0 {
+		t.Error(util.S2Json(res_2))
+		return
+	}
+	if res_2.StrValP("/base/id") != fid {
+		fmt.Println(util.S2Json(res_2), fid)
+		t.Error("error")
+		return
+	}
+	if res_2.StrValP("/base/sha") != sha {
+		t.Error("error")
+		return
+	}
+	if res_2.StrValP("/base/pub") != pub {
+		t.Error("error")
+		return
+	}
+	if res_2.StrValP("/url") != url {
 		t.Error("error")
 		return
 	}
@@ -289,6 +322,13 @@ func TestUpDown(t *testing.T) {
 	}
 	fmt.Println(util.S2Json(res))
 	if res.Val("task") != nil {
+		t.Error("error")
+		return
+	}
+	//
+	//upload fail with mark exist
+	_, err = DoUpF("run_ff.sh", "", "xxa", "x,y,z", folder.Id, "desc", 1)
+	if err == nil {
 		t.Error("error")
 		return
 	}

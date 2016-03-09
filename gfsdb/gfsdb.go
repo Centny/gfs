@@ -8,6 +8,7 @@ import (
 
 const (
 	CN_F      = "c_f"
+	CN_MARK   = "c_mark"
 	CN_FILE   = "c_file"
 	CN_FOLDER = "c_folder"
 )

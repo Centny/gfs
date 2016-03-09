@@ -22,11 +22,15 @@ type F struct {
 	Size     int64    `bson:"size" json:"size"`         //file size.
 	Type     string   `bson:"type" json:"type"`         //mimetype
 	Path     string   `bson:"path" json:"path"`         //file save path.
-	Mark     []string `bson:"mark" json:"mark"`         //file marks
 	Exec     string   `bson:"exec" json:"exec"`         //the exec status
 	Info     util.Map `bson:"info" json:"info"`         //the extern info.
 	Status   string   `bson:"status" json:"status"`     //file status
 	Time     int64    `bson:"time" json:"time"`         //upload time.
+}
+
+type Mark struct {
+	Id  string `bson:"_id" json:"id"`
+	Fid string `bson:"fid" json:"fid"`
 }
 
 // func (f *F) AddMark(mark []string) []string {

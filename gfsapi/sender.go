@@ -31,6 +31,7 @@ func NewDefaultSender(fh http.Handler, pre string) *DefaultSender {
 	return &DefaultSender{FH: fh, Pre: pre}
 }
 func NewDefaultSender2(dir, pre string) *DefaultSender {
+	log.D("create default sender by dir(%v),pre(%v)", dir, pre)
 	return NewDefaultSender(http.FileServer(http.Dir(dir)), pre)
 }
 func (d *DefaultSender) Send(hs *routing.HTTPSession, rf *gfsdb.F, etype string, dl bool, idx int) routing.HResult {

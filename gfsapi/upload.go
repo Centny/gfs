@@ -107,10 +107,7 @@ func (f *FSH) Up(hs *routing.HTTPSession) routing.HResult {
 	}
 	log.D("FSH receive file upload by pub(%v),base64(%v),name(%v),mark(%v),tags(%v),folder(%v)",
 		pub, base64, name, mark, tags, folder)
-	var (
-		pub_url string
-		rf      = &gfsdb.F{}
-	)
+	var rf = &gfsdb.F{}
 	if base64 == 0 {
 		err = f.do_file(hs, rf, name)
 	} else {
@@ -122,20 +119,24 @@ func (f *FSH) Up(hs *routing.HTTPSession) routing.HResult {
 	rf.Time, rf.Status = util.Now(), "N"
 	if pub > 0 {
 		rf.Pub = "F/" + util.ShortLink(rf.SHA+rf.MD5+rf.Path+rf.EXT)
-		pub_url = fmt.Sprintf("%v/%v", f.Host, rf.Pub)
 	}
-	_, err = gfsdb.FOI_F(rf)
+	updated, err := gfsdb.FOI_F(rf)
 	if err != nil {
 		err = util.Err("FSH find or insert really file by (%v) error->%v", util.S2Json(rf), err)
 		log.E("%v", err)
 		return hs.MsgResErr2(-3, "srv-err", err)
 	}
 	if len(mark) > 0 {
-		rf, err = gfsdb.AddMarkF(rf.Id, strings.Split(mark, ","))
+		mk, err := gfsdb.FOI_Mark(mark, rf.Id)
 		if err != nil {
 			err = util.Err("FSH adding mark to really file by id(%v),mark(%v) error->%v", rf.Id, mark, err)
 			log.E("%v", err)
 			return hs.MsgResErr2(-4, "srv-err", err)
+		}
+		if mk.Fid != rf.Id {
+			err = util.Err("FSH adding mark to really file by id(%v),mark(%v) error->the mark is exist on other file", rf.Id, mark)
+			log.E("%v", err)
+			return hs.MsgResErr2(-5, "srv-err", err)
 		}
 	}
 	if len(folder) > 0 {
@@ -143,7 +144,7 @@ func (f *FSH) Up(hs *routing.HTTPSession) routing.HResult {
 		if err != nil {
 			err = util.Err("FSH check folder exist by id(%v) error->%v", folder, err)
 			log.E("%v", err)
-			return hs.MsgResErr2(-4, "srv-err", err)
+			return hs.MsgResErr2(-6, "srv-err", err)
 		}
 	}
 	var file = &gfsdb.File{}
@@ -154,7 +155,8 @@ func (f *FSH) Up(hs *routing.HTTPSession) routing.HResult {
 	}
 	file.Desc, file.Folder = desc, folder
 	file.Time, file.Status = util.Now(), "N"
-	updated, err := gfsdb.FOI_File(file)
+	var pub_url = fmt.Sprintf("%v/%v", f.Host, rf.Pub)
+	_, err = gfsdb.FOI_File(file)
 	if err == nil {
 		log.D("FSH add file pub(%v),base64(%v),name(%v),mark(%v),tags(%v),folder(%v) success",
 			pub, base64, name, mark, tags, folder)
@@ -167,7 +169,7 @@ func (f *FSH) Up(hs *routing.HTTPSession) routing.HResult {
 	} else {
 		err = util.Err("FSH find or insert user file by (%v) error->%v", util.S2Json(file), err)
 		log.E("%v", err)
-		return hs.MsgResErr2(-5, "srv-err", err)
+		return hs.MsgResErr2(-7, "srv-err", err)
 	}
 }
 

@@ -66,18 +66,18 @@ func update_exec(rf *F) error {
 	return err
 }
 
-func AddMarkF(id string, mark []string) (*F, error) {
-	var rf = &F{}
-	var _, err = C(CN_F).Find(bson.M{
-		"_id": id,
+func FOI_Mark(mark, fid string) (*Mark, error) {
+	var mk = &Mark{}
+	var _, err = C(CN_MARK).Find(bson.M{
+		"_id": mark,
 	}).Apply(tmgo.Change{
 		Update: bson.M{
-			"$addToSet": bson.M{"mark": bson.M{"$each": mark}},
+			"$setOnInsert": bson.M{"fid": fid},
 		},
-		Upsert:    false,
+		Upsert:    true,
 		ReturnNew: true,
-	}, rf)
-	return rf, err
+	}, mk)
+	return mk, err
 }
 
 func CountF() (int, error) {
@@ -114,9 +114,13 @@ func FindHashF(sha, md5 string) (*F, error) {
 }
 
 func FindMarkF(mark string) (*F, error) {
-	return FindFv(bson.M{
-		"mark": mark,
-	})
+	var mk = &Mark{}
+	var err = C(CN_MARK).FindId(mark).One(&mk)
+	if err == nil {
+		return FindF(mk.Fid)
+	} else {
+		return nil, err
+	}
 }
 
 func FindPubF(pub string) (*F, error) {
