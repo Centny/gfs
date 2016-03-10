@@ -24,6 +24,7 @@ import (
 func init() {
 	mgo.C(gfsdb.CN_FOLDER).RemoveAll(nil)
 	mgo.C(gfsdb.CN_F).RemoveAll(nil)
+	mgo.C(gfsdb.CN_MARK).RemoveAll(nil)
 	func() {
 		defer func() {
 			recover()
@@ -170,6 +171,9 @@ func TestUpDown(t *testing.T) {
 		t.Error("error")
 		return
 	}
+	// if true {
+	// 	return
+	// }
 
 	//upload sample file
 	res_2, err := DoUpF("../../ffcm/xx.mp4", "", "xxa", "x,y,z", folder.Id, "desc", 1)

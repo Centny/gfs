@@ -175,7 +175,7 @@ func (f *FSH) Up(hs *routing.HTTPSession) routing.HResult {
 
 func (f *FSH) do_file(hs *routing.HTTPSession, rf *gfsdb.F, name string) error {
 	var _, size, sha_, md5_, err = hs.RecFvV3(f.Key, func(part *multipart.Part) string {
-		rf.Filename = part.FileName()
+		_, rf.Filename = filepath.Split(part.FileName())
 		rf.EXT = strings.ToLower(filepath.Ext(rf.Filename))
 		_, rf.Path = f.Base.NewFile(hs, rf.Filename)
 		var spath = f.Base.AbsPath(hs, rf.Path)

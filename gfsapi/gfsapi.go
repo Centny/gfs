@@ -205,6 +205,7 @@ func (f *FSH) Info(hs *routing.HTTPSession) routing.HResult {
 				"total":  total,
 				"detail": res,
 			},
+			"url": fmt.Sprintf("%v/%v", f.Host, file.Pub),
 		})
 	} else {
 		return hs.MsgRes(util.Map{

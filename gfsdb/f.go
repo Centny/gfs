@@ -174,18 +174,19 @@ func (f *FFCM_H) ParseRes(task *dtm.Task, res util.Map) error {
 			log.E("%v", err)
 			return err
 		}
+		delete(data, "src")
 		res.SetVal(key, data)
 	}
 	return nil
 }
 func (f *FFCM_H) OnDone(dtcm *dtm.DTCM_S, task *dtm.Task) error {
 	var info = util.Map{}
-	info["info"] = task.Info
 	var err = f.ParseRes(task, info)
 	if err == nil {
 		info["code"] = 0
 	} else {
 		info["code"] = 1
+		info["info"] = task.Info
 		info["error"] = err.Error()
 	}
 	return UpdateF(task.Id, bson.M{

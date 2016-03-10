@@ -21,7 +21,7 @@ type F struct {
 	EXT      string   `bson:"ext" json:"ext"`           //file externd
 	Size     int64    `bson:"size" json:"size"`         //file size.
 	Type     string   `bson:"type" json:"type"`         //mimetype
-	Path     string   `bson:"path" json:"path"`         //file save path.
+	Path     string   `bson:"path" json:"-"`            //file save path.
 	Exec     string   `bson:"exec" json:"exec"`         //the exec status
 	Info     util.Map `bson:"info" json:"info"`         //the extern info.
 	Status   string   `bson:"status" json:"status"`     //file status
