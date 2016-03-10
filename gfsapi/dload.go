@@ -84,12 +84,12 @@ func (f *FSH) Pub(hs *routing.HTTPSession) routing.HResult {
 	}
 	path = strings.TrimSuffix(path, filepath.Ext(path))
 	var paths = strings.Split(path, "/")
-	if len(paths) < 2 {
-		hs.W.WriteHeader(404)
-		fmt.Fprintf(hs.W, "the file path must be setted")
-		return routing.HRES_RETURN
-	}
-	var pub = paths[0] + "/" + paths[1]
+	// if len(paths) < 1 {
+	// 	hs.W.WriteHeader(404)
+	// 	fmt.Fprintf(hs.W, "the file path must be setted")
+	// 	return routing.HRES_RETURN
+	// }
+	var pub = paths[0]
 	//
 	var rf, err = gfsdb.FindPubF(pub)
 	if err == tmgo.ErrNotFound {
@@ -106,15 +106,15 @@ func (f *FSH) Pub(hs *routing.HTTPSession) routing.HResult {
 		return routing.HRES_RETURN
 	}
 	var etype = ""
-	if len(paths) > 2 {
-		etype = paths[2]
+	if len(paths) > 1 {
+		etype = paths[1]
 	}
 	var idx = 0
-	if len(paths) > 3 {
-		idx, err = util.ParseInt(paths[3])
+	if len(paths) > 2 {
+		idx, err = util.ParseInt(paths[2])
 		if err != nil {
 			hs.W.WriteHeader(400)
-			var msg = fmt.Sprintf("file index(%v) is invalid->%v", paths[3], err)
+			var msg = fmt.Sprintf("file index(%v) is invalid->%v", paths[2], err)
 			log.E("%v", msg)
 			fmt.Fprintf(hs.W, "%v", msg)
 			return routing.HRES_RETURN

@@ -61,6 +61,21 @@ func (f *FBaseImpl) ParseSubs(fcfg *util.Fcfg, sec string) int {
 	return count
 }
 
+func FilterTaskInfo(f *gfsdb.F) {
+	if f.Info == nil {
+		return
+	}
+	for key, _ := range f.Info {
+		var mv = f.Info.MapVal(key)
+		if mv == nil {
+			continue
+		}
+		delete(mv, "files")
+		delete(mv, "src")
+		f.Info.SetVal(key, mv)
+	}
+}
+
 type FSH struct {
 	Base    FBase
 	Key     string
@@ -190,6 +205,7 @@ func (f *FSH) Info(hs *routing.HTTPSession) routing.HResult {
 		log.E("%v", err)
 		return hs.MsgResErr2(1, "srv-err", err)
 	}
+	FilterTaskInfo(file)
 	log.D("FSH query file info by fid(%v)/sha(%v)/md5(%v)/mark(%v) success", fid, sha, md5, mark)
 	if file.Exec != gfsdb.ES_RUNNING || ffcm.SRV == nil {
 		return hs.MsgRes(util.Map{

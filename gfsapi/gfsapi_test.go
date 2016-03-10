@@ -85,8 +85,9 @@ func TestUpDown(t *testing.T) {
 	var sha = res.StrValP("/base/sha")
 	var pub = res.StrValP("/base/pub")
 	var url = res.StrValP("/url")
-	var path = res.StrValP("/base/path")
-	if len(fid) < 1 || len(sha) < 1 || len(pub) < 1 {
+	var tf, _ = gfsdb.FindF(fid)
+	var path = tf.Path
+	if len(fid) < 1 || len(sha) < 1 || len(pub) < 1 || len(path) < 1 {
 		t.Error("fid is empty")
 		return
 	}
@@ -199,6 +200,19 @@ func TestUpDown(t *testing.T) {
 		return
 	}
 	if res_2.StrValP("/url") != url {
+		t.Error("error")
+		return
+	}
+	if res_2.MapValP("/base/info/V_pc") == nil {
+		t.Error("error")
+		return
+	}
+
+	if vv, _ := res_2.ValP("/base/info/V_pc/files"); vv != nil {
+		t.Error("error")
+		return
+	}
+	if vv, _ := res_2.ValP("/base/info/V_pc/src"); vv != nil {
 		t.Error("error")
 		return
 	}
