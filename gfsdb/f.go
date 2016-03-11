@@ -43,16 +43,18 @@ func FOI_F(rf *F) (int, error) {
 		log.D("FOI_F adding really file(%v) on path(%v) success with ffcm server is not running", rf.Id, rf.Path)
 		return 1, nil
 	}
-	var out = CreateOutPath(rf)
-	err = ffcm.SRV.AddTaskV(rf.Id, rf.Id, rf.Path, out, filepath.Ext(rf.Path))
-	if err == nil {
-		log.D("FOI_F adding really file(%v) on path(%v) success with ffcm task out path(%v)", rf.Id, rf.Path, out)
-	} else if dtm.IsNotMatchedErr(err) {
-		log.D("FOI_F adding really file(%v) on path(%v) success with not ffcm task matched", rf.Id, rf.Path)
-	} else {
-		log.E("FOI_F adding really file(%v) on path(%v) success, but add ffcm task to out path(%v) error->%v, will mark it to exec error", rf.Id, rf.Path, out, err)
-		update_exec(rf)
-	}
+	go func() {
+		var out = CreateOutPath(rf)
+		err = ffcm.SRV.AddTaskV(rf.Id, rf.Id, rf.Path, out, filepath.Ext(rf.Path))
+		if err == nil {
+			log.D("FOI_F adding really file(%v) on path(%v) success with ffcm task out path(%v)", rf.Id, rf.Path, out)
+		} else if dtm.IsNotMatchedErr(err) {
+			log.D("FOI_F adding really file(%v) on path(%v) success with not ffcm task matched", rf.Id, rf.Path)
+		} else {
+			log.E("FOI_F adding really file(%v) on path(%v) success, but add ffcm task to out path(%v) error->%v, will mark it to exec error", rf.Id, rf.Path, out, err)
+			update_exec(rf)
+		}
+	}()
 	return res.Updated, nil
 }
 
