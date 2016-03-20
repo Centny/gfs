@@ -182,6 +182,7 @@ func (f *FFCM_H) ParseRes(task *dtm.Task, res util.Map) error {
 	return nil
 }
 func (f *FFCM_H) OnDone(dtcm *dtm.DTCM_S, task *dtm.Task) error {
+	log.D("FFCM_H receive done for task(%v)", task.Id)
 	var info = util.Map{}
 	var err = f.ParseRes(task, info)
 	if err == nil {
