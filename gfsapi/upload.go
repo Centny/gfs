@@ -38,7 +38,7 @@ import (
 //	base			O	the file base information, see the /pub/api/info for the detail.
 //	added			I	whether the file be added.
 //	file			O	the file information to user.
-//	url				S	the public url.
+//	data			S	the public url.
 //	file.id			S	the file id
 //	file.folder		S	the folder id.
 //	file.name		S	the special name
@@ -49,49 +49,46 @@ import (
 	The json example result when success.
 	{
 		"code": 0,
-		"data": {
-			"added": 1,
-			"base": {
-				"exec": "running",
-				"ext": ".mp4",
-				"filename": "../../ffcm/xx.mp4",
-				"id": "56da302dc3666e525fd7b05d",
-				"info": {},
-				"mark": ["xxa"],
-				"md5": "52757d83284ca0967bc0c9e2be342c13",
-				"name": "../../ffcm/xx.mp4",
-				"path": "www/u_56da302dc3666e525f000001.mp4",
-				"pub": "F/=uXWqA==",
-				"sha": "226cf3e82860ea778ccae40a9e424be5700249e1",
-				"size": 431684,
-				"status": "N",
-				"time": 1.457139757875e+12,
-				"type": "application/octet-stream"
-			},
-			"file": {
-				"desc": "desc",
-				"fid": "56da302dc3666e525fd7b05d",
-				"floder": "56da302ac3666e525fd7b05c",
-				"id": "56da302dc3666e525fd7b05e",
-				"name": "../../ffcm/xx.mp4",
-				"oid": "123",
-				"owner": "USR",
-				"status": "N",
-				"tags": ["x", "y", "z"],
-				"time": 1.457139757961e+12
-			},
-			"url": "http://127.0.0.1:57013/F/=uXWqA=="
-		}
+		"added": 1,
+		"base": {
+			"exec": "running",
+			"ext": ".mp4",
+			"filename": "../../ffcm/xx.mp4",
+			"id": "56da302dc3666e525fd7b05d",
+			"info": {},
+			"mark": ["xxa"],
+			"md5": "52757d83284ca0967bc0c9e2be342c13",
+			"name": "../../ffcm/xx.mp4",
+			"path": "www/u_56da302dc3666e525f000001.mp4",
+			"pub": "F/=uXWqA==",
+			"sha": "226cf3e82860ea778ccae40a9e424be5700249e1",
+			"size": 431684,
+			"status": "N",
+			"time": 1.457139757875e+12,
+			"type": "application/octet-stream"
+		},
+		"file": {
+			"desc": "desc",
+			"fid": "56da302dc3666e525fd7b05d",
+			"floder": "56da302ac3666e525fd7b05c",
+			"id": "56da302dc3666e525fd7b05e",
+			"name": "../../ffcm/xx.mp4",
+			"oid": "123",
+			"owner": "USR",
+			"status": "N",
+			"tags": ["x", "y", "z"],
+			"time": 1.457139757961e+12
+		},
+		"data": "http://127.0.0.1:57013/F/=uXWqA=="
 	}
 */
 //@tag,file,upload
 //@author,cny,2016-03-05
 func (f *FSH) Up(hs *routing.HTTPSession) routing.HResult {
 	var (
-		pub, base64                    int = 0, 0
+		pub, base64, recorded          int = 0, 0, 0
 		name, mark, tags, desc, folder string
 	)
-	fmt.Println("up.....")
 	err := hs.ValidCheckValN(`
 		pub,O|I,O:0~1;
 		base64,O|I,O:0~1;
@@ -100,7 +97,8 @@ func (f *FSH) Up(hs *routing.HTTPSession) routing.HResult {
 		tags,O|S,L:0~255;
 		desc,O|S,L:0~255;
 		folder,O|S,L:0~255;
-		`, &pub, &base64, &name, &mark, &tags, &desc, &folder)
+		recorded,O|I,O:0~1;
+		`, &pub, &base64, &name, &mark, &tags, &desc, &folder, &recorded)
 	if err != nil {
 		log.D("FSH upload receive bad arguments error:%v", err.Error())
 		return hs.MsgResErr2(-1, "arg-err", err)
@@ -139,38 +137,41 @@ func (f *FSH) Up(hs *routing.HTTPSession) routing.HResult {
 			return hs.MsgResErr2(-5, "srv-err", err)
 		}
 	}
-	if len(folder) > 0 {
-		_, err = gfsdb.FindFolder(folder)
-		if err != nil {
-			err = util.Err("FSH check folder exist by id(%v) error->%v", folder, err)
-			log.E("%v", err)
-			return hs.MsgResErr2(-6, "srv-err", err)
-		}
-	}
-	var file = &gfsdb.File{}
-	file.Fid, file.Name = rf.Id, rf.Name
-	file.Oid, file.Owner = hs.StrVal("uid"), "USR"
-	if len(tags) > 0 {
-		file.Tags = strings.Split(tags, ",")
-	}
-	file.Desc, file.Folder = desc, folder
-	file.Time, file.Status = util.Now(), "N"
 	var pub_url = fmt.Sprintf("%v/%v", f.Host, rf.Pub)
-	_, err = gfsdb.FOI_File(file)
-	if err == nil {
-		log.D("FSH add file pub(%v),base64(%v),name(%v),mark(%v),tags(%v),folder(%v) success",
-			pub, base64, name, mark, tags, folder)
-		return hs.MsgRes(util.Map{
-			"url":   pub_url,
-			"base":  rf,
-			"file":  file,
-			"added": updated,
-		})
-	} else {
-		err = util.Err("FSH find or insert user file by (%v) error->%v", util.S2Json(file), err)
-		log.E("%v", err)
-		return hs.MsgResErr2(-7, "srv-err", err)
+	var args = util.Map{
+		"data":  pub_url,
+		"base":  rf,
+		"added": updated,
 	}
+	if recorded > 0 {
+		if len(folder) > 0 {
+			_, err = gfsdb.FindFolder(folder)
+			if err != nil {
+				err = util.Err("FSH check folder exist by id(%v) error->%v", folder, err)
+				log.E("%v", err)
+				return hs.MsgResErr2(-6, "srv-err", err)
+			}
+		}
+		var file = &gfsdb.File{}
+		file.Fid, file.Name = rf.Id, rf.Name
+		file.Oid, file.Owner = hs.StrVal("uid"), "USR"
+		if len(tags) > 0 {
+			file.Tags = strings.Split(tags, ",")
+		}
+		file.Desc, file.Folder = desc, folder
+		file.Time, file.Status = util.Now(), "N"
+		_, err = gfsdb.FOI_File(file)
+		if err != nil {
+			err = util.Err("FSH find or insert user file by (%v) error->%v", util.S2Json(file), err)
+			log.E("%v", err)
+			return hs.MsgResErr2(-7, "srv-err", err)
+		}
+		args["file"] = file
+	}
+	log.D("FSH add file pub(%v),base64(%v),name(%v),mark(%v),tags(%v),folder(%v) success",
+		pub, base64, name, mark, tags, folder)
+	args["code"] = 0
+	return hs.JRes(args)
 }
 
 func (f *FSH) do_file(hs *routing.HTTPSession, rf *gfsdb.F, name string) error {

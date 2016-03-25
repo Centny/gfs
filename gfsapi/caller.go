@@ -16,17 +16,17 @@ var SrvArgs = func() string {
 	return ""
 }
 
-func DoUpF(file, name, mark, tags, folder, desc string, pub int) (util.Map, error) {
+func DoUpF(file, name, mark, tags, folder, desc string, pub, recorded int) (util.Map, error) {
 	var url = fmt.Sprintf(
-		"%v/usr/api/uload?name=%v&mark=%v&tags=%v&folder=%v&desc=%v&pub=%v&%v",
-		SrvAddr(), name, mark, tags, folder, desc, pub, SrvArgs())
+		"%v/usr/api/uload?name=%v&mark=%v&tags=%v&folder=%v&desc=%v&pub=%v&recorded=%v&%v",
+		SrvAddr(), name, mark, tags, folder, desc, pub, recorded, SrvArgs())
 	log.D("DoUpF upload file to %v", url)
 	var res, err = util.HPostF2(url, nil, "file", file)
 	if err != nil {
 		return nil, err
 	}
 	if res.IntVal("code") == 0 {
-		return res.MapVal("data"), nil
+		return res, nil
 	} else {
 		return nil, util.Err(
 			"upload file by file(%v)name(%v),mark(%v),tags(%v),folder(%v),desc(%v),pub(%v) error->%v",
@@ -34,16 +34,16 @@ func DoUpF(file, name, mark, tags, folder, desc string, pub int) (util.Map, erro
 	}
 }
 
-func DoUpBase64(buf, ctype, name, mark, tags, folder, desc string, pub int) (util.Map, error) {
+func DoUpBase64(buf, ctype, name, mark, tags, folder, desc string, pub, recorded int) (util.Map, error) {
 	var base64 = bytes.NewBufferString(buf)
 	var _, res, err = util.HPostN2(fmt.Sprintf(
-		"%v/usr/api/uload?name=%v&mark=%v&tags=%v&folder=%v&desc=%v&pub=%v&base64=1&%v",
-		SrvAddr(), name, mark, tags, folder, desc, pub, SrvArgs()), ctype, base64)
+		"%v/usr/api/uload?name=%v&mark=%v&tags=%v&folder=%v&desc=%v&pub=%v&base64=1&recorded=%v&%v",
+		SrvAddr(), name, mark, tags, folder, desc, pub, recorded, SrvArgs()), ctype, base64)
 	if err != nil {
 		return nil, err
 	}
 	if res.IntVal("code") == 0 {
-		return res.MapVal("data"), nil
+		return res, nil
 	} else {
 		return nil, util.Err(
 			"upload file by type(%v),name(%v),mark(%v),tags(%v),folder(%v),desc(%v),pub(%v) error->%v",

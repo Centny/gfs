@@ -74,7 +74,7 @@ func TestUpDown(t *testing.T) {
 	}
 	//
 	//test upload file
-	res, err := DoUpF("../../ffcm/xx.mp4", "", "xxa", "x,y,z", folder.Id, "desc", 1)
+	res, err := DoUpF("../../ffcm/xx.mp4", "", "xxa", "x,y,z", folder.Id, "desc", 1, 1)
 	if err != nil {
 		t.Error(err.Error())
 		return
@@ -176,8 +176,8 @@ func TestUpDown(t *testing.T) {
 	// 	return
 	// }
 
-	//upload sample file
-	res_2, err := DoUpF("../../ffcm/xx.mp4", "", "xxa", "x,y,z", folder.Id, "desc", 1)
+	//upload same file
+	res_2, err := DoUpF("../../ffcm/xx.mp4", "", "xxa", "x,y,z", folder.Id, "desc", 1, 1)
 	if err != nil {
 		t.Error(err.Error())
 		return
@@ -316,7 +316,7 @@ func TestUpDown(t *testing.T) {
 		t.Error(err.Error())
 		return
 	}
-	res, err = DoUpBase64(data, "text/plain", "run_ff.sh", "123", "", "", "", 1)
+	res, err = DoUpBase64(data, "text/plain", "run_ff.sh", "123", "", "", "", 1, 1)
 	if err != nil {
 		t.Error(err.Error())
 		return
@@ -345,7 +345,7 @@ func TestUpDown(t *testing.T) {
 	}
 	//
 	//upload fail with mark exist
-	_, err = DoUpF("run_ff.sh", "", "xxa", "x,y,z", folder.Id, "desc", 1)
+	_, err = DoUpF("run_ff.sh", "", "xxa", "x,y,z", folder.Id, "desc", 1, 1)
 	if err == nil {
 		t.Error("error")
 		return
@@ -504,7 +504,7 @@ func TestUpDown(t *testing.T) {
 	tmgo.Mock = true
 	//
 	tmgo.SetMckC("Query-Apply", 0)
-	_, err = DoUpF("../../ffcm/xx.mp4", "xx.mp4", "xxa", "x,y,z", folder.Id, "desc", 1)
+	_, err = DoUpF("../../ffcm/xx.mp4", "xx.mp4", "xxa", "x,y,z", folder.Id, "desc", 1, 1)
 	if err == nil {
 		t.Error("error")
 		return
@@ -512,7 +512,7 @@ func TestUpDown(t *testing.T) {
 	tmgo.ClearMock()
 	//
 	tmgo.SetMckC("Query-Apply", 0)
-	_, err = DoUpBase64(data, "text/plain", "run_ff.sh", "123", "", "", "", 1)
+	_, err = DoUpBase64(data, "text/plain", "run_ff.sh", "123", "", "", "", 1, 1)
 	if err == nil {
 		t.Error("error")
 		return
@@ -520,7 +520,7 @@ func TestUpDown(t *testing.T) {
 	tmgo.ClearMock()
 	//
 	tmgo.SetMckC("Query-Apply", 1)
-	_, err = DoUpF("../../ffcm/xx.mp4", "xx.mp4", "xxa", "x,y,z", folder.Id, "desc", 1)
+	_, err = DoUpF("../../ffcm/xx.mp4", "xx.mp4", "xxa", "x,y,z", folder.Id, "desc", 1, 1)
 	if err == nil {
 		t.Error("error")
 		return
@@ -528,7 +528,7 @@ func TestUpDown(t *testing.T) {
 	tmgo.ClearMock()
 	//
 	tmgo.SetMckC("Query-One", 0)
-	_, err = DoUpF("../../ffcm/xx.mp4", "xx.mp4", "xxa", "x,y,z", folder.Id, "desc", 1)
+	_, err = DoUpF("../../ffcm/xx.mp4", "xx.mp4", "xxa", "x,y,z", folder.Id, "desc", 1, 1)
 	if err == nil {
 		t.Error("error")
 		return
@@ -536,7 +536,7 @@ func TestUpDown(t *testing.T) {
 	tmgo.ClearMock()
 	//
 	tmgo.SetMckC("Query-Apply", 2)
-	_, err = DoUpF("../../ffcm/xx.mp4", "xx.mp4", "xxa", "x,y,z", folder.Id, "desc", 1)
+	_, err = DoUpF("../../ffcm/xx.mp4", "xx.mp4", "xxa", "x,y,z", folder.Id, "desc", 1, 1)
 	if err == nil {
 		t.Error("error")
 		return
@@ -558,8 +558,8 @@ func TestUpDown(t *testing.T) {
 	DoInfo("fid", "sha", "md5", "mark")
 	DoFileDown("fid", "mark", "etype", 0, "path")
 	DoPubDown("pub", "path")
-	DoUpBase64("nil", "ctype", "name", "mark", "tags", "folder", "desc", 1)
-	DoUpF("file", "name", "mark", "tags", "folder", "desc", 1)
+	DoUpBase64("nil", "ctype", "name", "mark", "tags", "folder", "desc", 1, 1)
+	DoUpF("file", "name", "mark", "tags", "folder", "desc", 1, 1)
 	//
 	fmt.Println("test done...")
 }
