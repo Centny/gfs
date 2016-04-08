@@ -239,7 +239,7 @@ func TestUpDown(t *testing.T) {
 		t.Error(err.Error())
 		return
 	}
-	tsha1, err := util.Sha1("out/" + strings.Replace(path, ".", "_pc.", -1))
+	tsha1, err := util.Sha1("sdata_o/" + strings.Replace(path, ".", "_pc.", -1))
 	if err != nil {
 		t.Error(err.Error())
 		return
@@ -261,7 +261,7 @@ func TestUpDown(t *testing.T) {
 		t.Error(err.Error())
 		return
 	}
-	tsha1, err = util.Sha1("out/" + strings.Replace(path, ".", "_js.", -1))
+	tsha1, err = util.Sha1("sdata_o/" + strings.Replace(path, ".", "_js.", -1))
 	if err != nil {
 		t.Error(err.Error())
 		return

@@ -72,7 +72,7 @@ func main() {
 		if len(os.Args) > 4 {
 			mark = os.Args[4]
 		}
-		res, err := gfsapi.DoUpF(os.Args[3], "", mark, "", "", "", 1)
+		res, err := gfsapi.DoUpF(os.Args[3], "", mark, "", "", "", 1, 1)
 		if err == nil {
 			fmt.Println(util.S2Json(res))
 		} else {
