@@ -5,5 +5,5 @@ import (
 )
 
 func init() {
-	mgo.AddDefault("cny:123@loc.m:27017/cny", "cny")
+	mgo.AddDefault("cny:123@loc.w:27017/cny", "cny")
 }
