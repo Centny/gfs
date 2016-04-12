@@ -20,6 +20,8 @@ func FOI_F(rf *F) (int, error) {
 	}
 	rf.Id = bson.NewObjectId().Hex()
 	rf.Exec = ES_NONE
+	var mv = rf.ToBsonM()
+	delete(mv, "pub")
 	var res, err = C(CN_F).Find(bson.M{
 		"$or": []bson.M{
 			bson.M{"sha": rf.SHA},
@@ -27,7 +29,10 @@ func FOI_F(rf *F) (int, error) {
 		},
 	}).Apply(tmgo.Change{
 		Update: bson.M{
-			"$setOnInsert": rf,
+			"$setOnInsert": mv,
+			"$set": bson.M{
+				"pub": rf.Pub,
+			},
 		},
 		Upsert:    true,
 		ReturnNew: true,

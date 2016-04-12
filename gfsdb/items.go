@@ -2,6 +2,7 @@ package gfsdb
 
 import (
 	"github.com/Centny/gwf/util"
+	"gopkg.in/mgo.v2/bson"
 )
 
 const (
@@ -26,6 +27,25 @@ type F struct {
 	Info     util.Map `bson:"info" json:"info"`         //the extern info.
 	Status   string   `bson:"status" json:"status"`     //file status
 	Time     int64    `bson:"time" json:"time"`         //upload time.
+}
+
+func (f *F) ToBsonM() bson.M {
+	return bson.M{
+		"_id":      f.Id,
+		"name":     f.Name,
+		"filename": f.Filename,
+		"pub":      f.Pub,
+		"sha":      f.SHA,
+		"md5":      f.MD5,
+		"ext":      f.EXT,
+		"size":     f.Size,
+		"type":     f.Type,
+		"path":     f.Path,
+		"exec":     f.Exec,
+		"info":     f.Info,
+		"status":   f.Status,
+		"time":     f.Time,
+	}
 }
 
 type Mark struct {
