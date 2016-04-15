@@ -61,18 +61,20 @@ func (f *FBaseImpl) ParseSubs(fcfg *util.Fcfg, sec string) int {
 	return count
 }
 
-func FilterTaskInfo(f *gfsdb.F) {
-	if f.Info == nil {
-		return
-	}
-	for key, _ := range f.Info {
-		var mv = f.Info.MapVal(key)
-		if mv == nil {
-			continue
+func FilterTaskInfo(fs []*gfsdb.F) {
+	for _, f := range fs {
+		if f.Info == nil {
+			return
 		}
-		delete(mv, "files")
-		delete(mv, "src")
-		f.Info.SetVal(key, mv)
+		for key, _ := range f.Info {
+			var mv = f.Info.MapVal(key)
+			if mv == nil {
+				continue
+			}
+			delete(mv, "files")
+			delete(mv, "src")
+			f.Info.SetVal(key, mv)
+		}
 	}
 }
 
@@ -131,6 +133,7 @@ func (f *FSH) AddSender(alias string, s FSedner) {
 //	mark	O	the file mark, it is specified when file is uploaded
 //	sha		O	the file SHA.
 //	md5		O	the file MD5.
+//	pub		O	the file pub.
 //	~/pub/api/info?fid=xxx
 //@ret,code/data return
 //	base			O	the file base information
@@ -183,15 +186,18 @@ func (f *FSH) AddSender(alias string, s FSedner) {
 //@author,cny,2016-03-05
 func (f *FSH) Info(hs *routing.HTTPSession) routing.HResult {
 	var err error
-	var fid, sha, md5, mark string
+	var fid, sha, md5, mark, pub string
 	hs.ValidCheckVal(`
 		fid,O|S,L:0;
 		sha,O|S,L:0;
 		md5,O|S,L:0;
 		mark,O|S,L:0;
-		`, &fid, &sha, &md5, &mark)
+		pub,O|S,L:0;
+		`, &fid, &sha, &md5, &mark, &pub)
 	var file *gfsdb.F
-	if len(fid) > 0 {
+	if len(pub) > 0 {
+		file, err = gfsdb.FindPubF(pub)
+	} else if len(fid) > 0 {
 		file, err = gfsdb.FindF(fid)
 	} else if len(sha) > 0 || len(md5) > 0 {
 		file, err = gfsdb.FindHashF(sha, md5)
@@ -205,7 +211,7 @@ func (f *FSH) Info(hs *routing.HTTPSession) routing.HResult {
 		log.E("%v", err)
 		return hs.MsgResErr2(1, "srv-err", err)
 	}
-	FilterTaskInfo(file)
+	FilterTaskInfo([]*gfsdb.F{file})
 	log.D("FSH query file info by fid(%v)/sha(%v)/md5(%v)/mark(%v) success", fid, sha, md5, mark)
 	if file.Exec != gfsdb.ES_RUNNING || ffcm.SRV == nil {
 		return hs.MsgRes(util.Map{
@@ -231,8 +237,135 @@ func (f *FSH) Info(hs *routing.HTTPSession) routing.HResult {
 	}
 }
 
+//List File Info
+//Get the file information by file id/mark/sha/md5,
+//the file informantion container file normal info like SHA1,MD5,size and the extern file info.
+//
+//@url,normal http get request
+//	~/pub/api/listInfo?fid=xxx,xxk		GET
+//@arg,the normal query arguments, at least one arguments is setted on fid/mark/sha/md5
+//	fid		O	the file id split by comma
+//	mark	O	the file mark split by comma, it is specified when file is uploaded
+//	sha		O	the file SHA split by comma.
+//	md5		O	the file MD5 split by comma.
+//	pub		O	the file pub split by comma.
+//	~/pub/api/listInfo?fid=xxx,xx
+//@ret,code/data return
+//	base			O	the file base information
+//	exec			O	the converter executing information, not this field when the task is not started/done or get task status fail.
+//	err				S	the error inforamtion when get converter task status fail.
+//	exec.total		F	the converter task process rate
+//	exec.detail		O	the sub task process rate
+//	base.filename 	S	the uploaed file name
+//	base.id			S	the file id
+//	base.mark		A	the file mark list.
+//	base.md5		S	the file MD5 hash
+//	base.name		S	the special name
+//	base.sha		S	the file SHA1 hash.
+//	base.size		I	the file size.
+//	base.time		I	the file upload time
+//	base.type		S	the file mime type.
+//	base.pub		S	the file public path.
+/*	the example
+	{
+		"code": 0,
+		"data": [{
+			"exec": {
+				"detail": {
+					"V_json": 0,
+					"V_pc": 0
+				},
+				"total": 0
+			},
+			"base": {
+				"exec": "running",
+				"ext": ".mp4",
+				"filename": "../../ffcm/xx.mp4",
+				"id": "56d9a4eec3666e4e02af307f",
+				"info": {},
+				"mark": ["xxa"],
+				"md5": "52757d83284ca0967bc0c9e2be342c13",
+				"name": "../../ffcm/xx.mp4",
+				"path": "www/u_56d9a4eec3666e4e02000001.mp4",
+				"pub": "F/bDRYOA==",
+				"sha": "226cf3e82860ea778ccae40a9e424be5700249e1",
+				"size": 431684,
+				"status": "N",
+				"time": 1.457104110367e+12,
+				"type": "application/octet-stream"
+			}
+		}
+	}]
+*/
+//@tag,file,info,list
+//@author,cny,2016-04-15
+func (f *FSH) ListInfo(hs *routing.HTTPSession) routing.HResult {
+	var err error
+	var fid, sha, md5, mark, pub string
+	hs.ValidCheckVal(`
+		fid,O|S,L:0;
+		sha,O|S,L:0;
+		md5,O|S,L:0;
+		mark,O|S,L:0;
+		pub,O|S,L:0;
+		`, &fid, &sha, &md5, &mark, &pub)
+	var files []*gfsdb.F
+	if len(pub) > 0 {
+		files, err = gfsdb.ListPubF(strings.Split(pub, ","))
+	} else if len(fid) > 0 {
+		files, err = gfsdb.ListF(strings.Split(fid, ","))
+	} else if len(sha) > 0 || len(md5) > 0 {
+		var sha_a, md5_a []string
+		if len(sha) > 0 {
+			sha_a = strings.Split(sha, ",")
+		}
+		if len(md5) > 0 {
+			md5_a = strings.Split(md5, ",")
+		}
+		files, err = gfsdb.ListHashF(sha_a, md5_a)
+	} else if len(mark) > 0 {
+		files, err = gfsdb.ListMarkF(strings.Split(mark, ","))
+	} else {
+		return hs.MsgResE3(2, "arg-err", "at least one argments must be setted on fid/sha/md5/mark")
+	}
+	if err != nil {
+		err = util.Err("FSH find file by fid(%v),sha(%v),md5(%v),mark(%v) error->%v", fid, sha, md5, mark, err)
+		log.E("%v", err)
+		return hs.MsgResErr2(1, "srv-err", err)
+	}
+	FilterTaskInfo(files)
+	log.D("FSH query file info by fid(%v)/sha(%v)/md5(%v)/mark(%v) success", fid, sha, md5, mark)
+	var fis = []util.Map{}
+	for _, file := range files {
+		if file.Exec != gfsdb.ES_RUNNING || ffcm.SRV == nil {
+			fis = append(fis, util.Map{
+				"base": file,
+			})
+		}
+		// log.D("FSH query file convert info by fid(%v)", fid)
+		total, res, err := ffcm.SRV.TaskRate(file.Id)
+		if err == nil {
+			fis = append(fis, util.Map{
+				"base": file,
+				"exec": util.Map{
+					"total":  total,
+					"detail": res,
+				},
+				"url": fmt.Sprintf("%v/%v", f.Host, file.Pub),
+			})
+		} else {
+			fis = append(fis, util.Map{
+				"base": file,
+				"err":  err,
+			})
+		}
+	}
+	return hs.MsgRes(fis)
+}
+
 func (f *FSH) Hand(pre string, mux *routing.SessionMux) {
 	mux.HFunc("^"+pre+"/pub/api/info(\\?.*)?", f.Info)
+	mux.HFunc("^"+pre+"/pub/api/listInfo(\\?.*)?", f.ListInfo)
 	mux.HFunc("^"+pre+"/usr/api/uload(\\?.*)?", f.Up)
 	mux.HFunc("^"+pre+"/usr/api/dload(\\?.*)?", f.Down)
 	mux.HFunc("^"+pre+"/.*$", f.Pub)

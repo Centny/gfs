@@ -83,6 +83,7 @@ func TestUpDown(t *testing.T) {
 	// fmt.Println(util.S2Json(res))
 	var fid = res.StrValP("/base/id")
 	var sha = res.StrValP("/base/sha")
+	var md5 = res.StrValP("/base/md5")
 	var pub = res.StrValP("/base/pub")
 	var url = res.StrValP("/url")
 	var tf, _ = gfsdb.FindF(fid)
@@ -96,7 +97,7 @@ func TestUpDown(t *testing.T) {
 	time.Sleep(1 * time.Second)
 	var ff_srv = ffcm.SRV
 	ffcm.SRV = nil
-	res, err = DoInfo(fid, "", "", "")
+	res, err = DoInfo(fid, "", "", "", "")
 	if err != nil {
 		t.Error(err.Error())
 		return
@@ -109,7 +110,7 @@ func TestUpDown(t *testing.T) {
 	ffcm.SRV = ff_srv
 	//
 	//test file id
-	res, err = DoInfo(fid, "", "", "")
+	res, err = DoInfo(fid, "", "", "", "")
 	if err != nil {
 		t.Error(err.Error())
 		return
@@ -120,7 +121,7 @@ func TestUpDown(t *testing.T) {
 	}
 	//
 	//test file mark
-	res, err = DoInfo("", "", "", "xxa")
+	res, err = DoInfo("", "", "", "xxa", "")
 	if err != nil {
 		t.Error(err.Error())
 		return
@@ -131,8 +132,14 @@ func TestUpDown(t *testing.T) {
 	}
 	fmt.Println(util.S2Json(res))
 	//
+	res, err = DoInfo("", "", "", "", pub)
+	if err != nil {
+		t.Error(err.Error())
+		return
+	}
+	//
 	//test file hash
-	res, err = DoInfo("", sha, "", "")
+	res, err = DoInfo("", sha, "", "", "")
 	if err != nil {
 		t.Error(err.Error())
 		return
@@ -147,11 +154,12 @@ func TestUpDown(t *testing.T) {
 	time.Sleep(1 * time.Second)
 	var check_c = 0
 	for {
-		res, err = DoInfo(fid, "", "", "")
+		res, err = DoInfo(fid, "", "", "", "")
 		if err != nil {
 			t.Error(err.Error())
 			return
 		}
+		DoListInfo([]string{fid}, nil, nil, nil, nil)
 		if fid != res.StrValP("/base/id") {
 			t.Error("error")
 			return
@@ -169,6 +177,57 @@ func TestUpDown(t *testing.T) {
 		time.Sleep(time.Second)
 	}
 	if check_c < 1 {
+		t.Error("error")
+		return
+	}
+	//
+	//
+	ress, err := DoListInfo([]string{fid}, nil, nil, nil, nil)
+	if err != nil {
+		t.Error(err.Error())
+		return
+	}
+	if len(ress) < 1 {
+		t.Error("error")
+		return
+	}
+	//
+	ress, err = DoListInfo(nil, []string{sha}, nil, nil, nil)
+	if err != nil {
+		t.Error(err.Error())
+		return
+	}
+	if len(ress) < 1 {
+		t.Error("error")
+		return
+	}
+	//
+	ress, err = DoListInfo(nil, nil, []string{md5}, nil, nil)
+	if err != nil {
+		t.Error(err.Error())
+		return
+	}
+	if len(ress) < 1 {
+		t.Error("error")
+		return
+	}
+	//
+	ress, err = DoListInfo(nil, nil, nil, []string{"xxa"}, nil)
+	if err != nil {
+		t.Error(err.Error())
+		return
+	}
+	if len(ress) < 1 {
+		t.Error("error")
+		return
+	}
+	//
+	ress, err = DoListInfo(nil, nil, nil, nil, []string{pub})
+	if err != nil {
+		t.Error(err.Error())
+		return
+	}
+	if len(ress) < 1 {
 		t.Error("error")
 		return
 	}
@@ -329,7 +388,7 @@ func TestUpDown(t *testing.T) {
 	}
 	//
 	//test not task
-	res, err = DoInfo(fid, "", "", "")
+	res, err = DoInfo(fid, "", "", "", "")
 	if err != nil {
 		t.Error(err.Error())
 		return
@@ -395,20 +454,32 @@ func TestUpDown(t *testing.T) {
 	// }
 	// ffcm.SRV.Db.(*dtm.MemH).Errs["Find"] = nil
 	//
-	res, err = DoInfo("", "", "", "")
+	res, err = DoInfo("", "", "", "", "")
 	if err == nil {
 		t.Error("error")
 		return
 	}
 	//
-	res, err = DoInfo("xdsds", "", "", "")
+	res, err = DoInfo("xdsds", "", "", "", "")
 	if err == nil {
+		t.Error("error")
+		return
+	}
+	//
+	ress, err = DoListInfo(nil, nil, nil, nil, nil)
+	if err == nil {
+		t.Error("error")
+		return
+	}
+	//
+	ress, err = DoListInfo([]string{"xdddd"}, nil, nil, nil, nil)
+	if len(ress) > 0 {
 		t.Error("error")
 		return
 	}
 	//
 	gfsdb.UpdateF(fid, bson.M{"exec": gfsdb.ES_RUNNING})
-	res, err = DoInfo(fid, "", "", "")
+	res, err = DoInfo(fid, "", "", "", "")
 	if err != nil {
 		t.Error("error")
 		return
@@ -551,15 +622,25 @@ func TestUpDown(t *testing.T) {
 	}
 	tmgo.ClearMock()
 	//
+	tmgo.SetMckC("Query-All", 0)
+	ress, err = DoListInfo([]string{"xdddd"}, nil, nil, nil, nil)
+	if err == nil {
+		t.Error("error")
+		return
+	}
+	tmgo.ClearMock()
+	//
 	//test address error
 	SrvAddr = func() string {
 		return "http://127.0.0.1:2334"
 	}
-	DoInfo("fid", "sha", "md5", "mark")
+	DoInfo("fid", "sha", "md5", "mark", "pub")
+	DoListInfo([]string{"fid"}, nil, nil, nil, nil)
 	DoFileDown("fid", "mark", "etype", 0, "path")
 	DoPubDown("pub", "path")
 	DoUpBase64("nil", "ctype", "name", "mark", "tags", "folder", "desc", 1, 1)
 	DoUpF("file", "name", "mark", "tags", "folder", "desc", 1, 1)
+	FilterTaskInfo([]*gfsdb.F{&gfsdb.F{}})
 	//
 	fmt.Println("test done...")
 }

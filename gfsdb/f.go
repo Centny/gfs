@@ -100,8 +100,18 @@ func FindFv(query bson.M) (*F, error) {
 	return f, C(CN_F).Find(query).One(f)
 }
 
+func ListFv(query bson.M) ([]*F, error) {
+	var fs = []*F{}
+	var err = C(CN_F).Find(query).All(&fs)
+	return fs, err
+}
+
 func FindF(id string) (*F, error) {
 	return FindFv(bson.M{"_id": id})
+}
+
+func ListF(ids []string) ([]*F, error) {
+	return ListFv(bson.M{"_id": bson.M{"$in": ids}})
 }
 
 func FindHashF(sha, md5 string) (*F, error) {
@@ -120,6 +130,22 @@ func FindHashF(sha, md5 string) (*F, error) {
 	})
 }
 
+func ListHashF(sha, md5 []string) ([]*F, error) {
+	var query = []bson.M{}
+	if len(sha) > 0 {
+		query = append(query, bson.M{"sha": bson.M{"$in": sha}})
+	}
+	if len(md5) > 0 {
+		query = append(query, bson.M{"md5": bson.M{"$in": md5}})
+	}
+	if len(query) < 1 {
+		return nil, util.Err("md5 or sha must not be empty")
+	}
+	return ListFv(bson.M{
+		"$or": query,
+	})
+}
+
 func FindMarkF(mark string) (*F, error) {
 	var mk = &Mark{}
 	var err = C(CN_MARK).FindId(mark).One(&mk)
@@ -130,10 +156,27 @@ func FindMarkF(mark string) (*F, error) {
 	}
 }
 
+func ListMarkF(mark []string) ([]*F, error) {
+	var mk = []*Mark{}
+	var err = C(CN_MARK).Find(bson.M{"_id": bson.M{"$in": mark}}).All(&mk)
+	if err != nil {
+		return nil, err
+	}
+	var fids = []string{}
+	for _, m := range mk {
+		fids = append(fids, m.Fid)
+	}
+	return ListF(fids)
+}
+
 func FindPubF(pub string) (*F, error) {
 	return FindFv(bson.M{
 		"pub": pub,
 	})
+}
+
+func ListPubF(pub []string) ([]*F, error) {
+	return ListFv(bson.M{"pub": bson.M{"$in": pub}})
 }
 
 func UpdateExecF(id, es string) error {

@@ -104,6 +104,51 @@ func TestF(t *testing.T) {
 		return
 	}
 	//
+	fs, err := ListF([]string{rt.Id})
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	if len(fs) < 1 {
+		t.Error("error")
+		return
+	}
+	//
+	fs, err = ListHashF([]string{rt.SHA}, []string{rt.MD5})
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	if len(fs) < 1 {
+		t.Error("error")
+		return
+	}
+	fs, err = ListHashF(nil, nil)
+	if err == nil {
+		t.Error("error")
+		return
+	}
+	//
+	fs, err = ListMarkF([]string{"jjk0"})
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	if len(fs) < 1 {
+		t.Error("error")
+		return
+	}
+	//
+	fs, err = ListPubF([]string{"/s"})
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	if len(fs) < 1 {
+		t.Error("error")
+		return
+	}
+	//
 	_, err = FOI_F(&F{})
 	if err == nil {
 		t.Error("error")
@@ -125,6 +170,46 @@ func TestF(t *testing.T) {
 		SHA:  "abc",
 		MD5:  "xyz",
 	})
+	if err == nil {
+		t.Error("error")
+		return
+	}
+	tmgo.ClearMock()
+	//
+	tmgo.SetMckC("Query-One", 0)
+	_, err = FindMarkF("kjj")
+	if err == nil {
+		t.Error("error")
+		return
+	}
+	tmgo.ClearMock()
+	//
+	tmgo.SetMckC("Query-All", 0)
+	fs, err = ListPubF([]string{"/s"})
+	if err == nil {
+		t.Error("error")
+		return
+	}
+	tmgo.ClearMock()
+	//
+	tmgo.SetMckC("Query-All", 0)
+	fs, err = ListF([]string{rt.Id})
+	if err == nil {
+		t.Error("error")
+		return
+	}
+	tmgo.ClearMock()
+	//
+	tmgo.SetMckC("Query-All", 0)
+	fs, err = ListHashF([]string{rt.SHA}, []string{rt.MD5})
+	if err == nil {
+		t.Error("error")
+		return
+	}
+	tmgo.ClearMock()
+	//
+	tmgo.SetMckC("Query-All", 0)
+	fs, err = ListMarkF([]string{"jjk0"})
 	if err == nil {
 		t.Error("error")
 		return

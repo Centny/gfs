@@ -7,6 +7,7 @@ import (
 	"github.com/Centny/gwf/log"
 	"github.com/Centny/gwf/util"
 	"io/ioutil"
+	"strings"
 )
 
 var SrvAddr = func() string {
@@ -51,10 +52,10 @@ func DoUpBase64(buf, ctype, name, mark, tags, folder, desc string, pub, recorded
 	}
 }
 
-func DoInfo(fid, sha, md5, mark string) (util.Map, error) {
+func DoInfo(fid, sha, md5, mark, pub string) (util.Map, error) {
 	var res, err = util.HGet2(
-		"%v/pub/api/info?fid=%v&sha=%v&md5=%v&mark=%v&%v",
-		SrvAddr(), fid, sha, md5, mark, SrvArgs())
+		"%v/pub/api/info?fid=%v&sha=%v&md5=%v&mark=%v&pub=%v&%v",
+		SrvAddr(), fid, sha, md5, mark, pub, SrvArgs())
 	if err != nil {
 		return nil, err
 	}
@@ -62,8 +63,25 @@ func DoInfo(fid, sha, md5, mark string) (util.Map, error) {
 		return res.MapVal("data"), nil
 	} else {
 		return nil, util.Err(
-			"query file info by fid(%v),sha(%v),md5(%v),mark(%v) error->%v",
-			fid, sha, md5, mark, util.S2Json(res))
+			"query file info by fid(%v),sha(%v),md5(%v),mark(%v),pub(%v) error->%v",
+			fid, sha, md5, mark, pub, util.S2Json(res))
+	}
+}
+
+func DoListInfo(fid, sha, md5, mark, pub []string) ([]util.Map, error) {
+	var res, err = util.HGet2(
+		"%v/pub/api/listInfo?fid=%v&sha=%v&md5=%v&mark=%v&pub=%v&%v",
+		SrvAddr(), strings.Join(fid, ","), strings.Join(sha, ","),
+		strings.Join(md5, ","), strings.Join(mark, ","), strings.Join(pub, ","), SrvArgs())
+	if err != nil {
+		return nil, err
+	}
+	if res.IntVal("code") == 0 {
+		return res.AryMapVal("data"), nil
+	} else {
+		return nil, util.Err(
+			"query file info by fid(%v),sha(%v),md5(%v),mark(%v),pub(%v) error->%v",
+			fid, sha, md5, mark, pub, util.S2Json(res))
 	}
 }
 
