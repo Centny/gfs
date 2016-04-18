@@ -231,6 +231,56 @@ func TestUpDown(t *testing.T) {
 		t.Error("error")
 		return
 	}
+	//
+	resm, err := DoListInfoM([]string{fid}, nil, nil, nil, nil, "fid")
+	if err != nil {
+		t.Error(err.Error())
+		return
+	}
+	if len(resm) < 1 || resm[fid] == nil {
+		t.Error("error")
+		return
+	}
+	//
+	resm, err = DoListInfoM([]string{fid}, nil, nil, nil, nil, "sha")
+	if err != nil {
+		t.Error(err.Error())
+		return
+	}
+	if len(resm) < 1 {
+		t.Error("error")
+		return
+	}
+	//
+	resm, err = DoListInfoM([]string{fid}, nil, nil, nil, nil, "md5")
+	if err != nil {
+		t.Error(err.Error())
+		return
+	}
+	if len(resm) < 1 {
+		t.Error("error")
+		return
+	}
+	//
+	resm, err = DoListInfoM(nil, nil, nil, []string{"xxa"}, nil, "mark")
+	if err != nil {
+		t.Error(err.Error())
+		return
+	}
+	if len(resm) < 1 {
+		t.Error("error")
+		return
+	}
+	//
+	resm, err = DoListInfoM([]string{fid}, nil, nil, nil, nil, "pub")
+	if err != nil {
+		t.Error(err.Error())
+		return
+	}
+	if len(resm) < 1 {
+		t.Error("error")
+		return
+	}
 	// if true {
 	// 	return
 	// }
@@ -477,6 +527,11 @@ func TestUpDown(t *testing.T) {
 		t.Error("error")
 		return
 	}
+	resm, err = DoListInfoM([]string{fid}, nil, nil, nil, nil, "pubxxx")
+	if len(resm) > 0 {
+		t.Error("error")
+		return
+	}
 	//
 	gfsdb.UpdateF(fid, bson.M{"exec": gfsdb.ES_RUNNING})
 	res, err = DoInfo(fid, "", "", "", "")
@@ -630,12 +685,21 @@ func TestUpDown(t *testing.T) {
 	}
 	tmgo.ClearMock()
 	//
+	tmgo.SetMckC("Query-All", 0)
+	resm, err = DoListInfoM([]string{"xdddd"}, nil, nil, nil, nil, "fid")
+	if err == nil {
+		t.Error("error")
+		return
+	}
+	tmgo.ClearMock()
+	//
 	//test address error
 	SrvAddr = func() string {
 		return "http://127.0.0.1:2334"
 	}
 	DoInfo("fid", "sha", "md5", "mark", "pub")
 	DoListInfo([]string{"fid"}, nil, nil, nil, nil)
+	DoListInfoM([]string{"fid"}, nil, nil, nil, nil, "fid")
 	DoFileDown("fid", "mark", "etype", 0, "path")
 	DoPubDown("pub", "path")
 	DoUpBase64("nil", "ctype", "name", "mark", "tags", "folder", "desc", 1, 1)

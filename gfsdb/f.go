@@ -157,16 +157,24 @@ func FindMarkF(mark string) (*F, error) {
 }
 
 func ListMarkF(mark []string) ([]*F, error) {
+	var fs, _, err = ListMarkFv(mark)
+	return fs, err
+}
+
+func ListMarkFv(mark []string) ([]*F, map[string]string, error) {
 	var mk = []*Mark{}
 	var err = C(CN_MARK).Find(bson.M{"_id": bson.M{"$in": mark}}).All(&mk)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 	var fids = []string{}
+	var mfids = map[string]string{}
 	for _, m := range mk {
 		fids = append(fids, m.Fid)
+		mfids[m.Fid] = m.Id
 	}
-	return ListF(fids)
+	fs, err := ListF(fids)
+	return fs, mfids, err
 }
 
 func FindPubF(pub string) (*F, error) {

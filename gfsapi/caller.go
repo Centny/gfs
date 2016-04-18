@@ -84,6 +84,25 @@ func DoListInfo(fid, sha, md5, mark, pub []string) ([]util.Map, error) {
 			fid, sha, md5, mark, pub, util.S2Json(res))
 	}
 }
+func DoListInfoM(fid, sha, md5, mark, pub []string, mode string) (util.Map, error) {
+	if mode != "fid" && mode != "sha" && mode != "md5" && mode != "mark" && mode != "pub" {
+		return nil, util.Err("the mode must be one of fid/sha/md5/mark/pub, but %v found", mode)
+	}
+	var res, err = util.HGet2(
+		"%v/pub/api/listInfo?fid=%v&sha=%v&md5=%v&mark=%v&pub=%v&mode=%v&%v",
+		SrvAddr(), strings.Join(fid, ","), strings.Join(sha, ","),
+		strings.Join(md5, ","), strings.Join(mark, ","), strings.Join(pub, ","), mode, SrvArgs())
+	if err != nil {
+		return nil, err
+	}
+	if res.IntVal("code") == 0 {
+		return res.MapVal("data"), nil
+	} else {
+		return nil, util.Err(
+			"query file info by fid(%v),sha(%v),md5(%v),mark(%v),pub(%v) error->%v",
+			fid, sha, md5, mark, pub, util.S2Json(res))
+	}
+}
 
 func DoFileDown(fid, mark, etype string, idx int, path string) error {
 	return util.DLoad(path,

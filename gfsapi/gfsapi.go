@@ -249,6 +249,7 @@ func (f *FSH) Info(hs *routing.HTTPSession) routing.HResult {
 //	sha		O	the file SHA split by comma.
 //	md5		O	the file MD5 split by comma.
 //	pub		O	the file pub split by comma.
+//	mode	O	the return data mode, default is list, it will return map value by special key value with setting mode is one of fid/mark/sha/md5/pub
 //	~/pub/api/listInfo?fid=xxx,xx
 //@ret,code/data return
 //	base			O	the file base information
@@ -294,22 +295,25 @@ func (f *FSH) Info(hs *routing.HTTPSession) routing.HResult {
 				"time": 1.457104110367e+12,
 				"type": "application/octet-stream"
 			}
-		}
-	}]
+		}]
+	}
 */
 //@tag,file,info,list
 //@author,cny,2016-04-15
 func (f *FSH) ListInfo(hs *routing.HTTPSession) routing.HResult {
 	var err error
 	var fid, sha, md5, mark, pub string
+	var mode = ""
 	hs.ValidCheckVal(`
 		fid,O|S,L:0;
 		sha,O|S,L:0;
 		md5,O|S,L:0;
 		mark,O|S,L:0;
 		pub,O|S,L:0;
-		`, &fid, &sha, &md5, &mark, &pub)
+		mode,O|S,L:0;
+		`, &fid, &sha, &md5, &mark, &pub, &mode)
 	var files []*gfsdb.F
+	var mfids = map[string]string{}
 	if len(pub) > 0 {
 		files, err = gfsdb.ListPubF(strings.Split(pub, ","))
 	} else if len(fid) > 0 {
@@ -324,7 +328,8 @@ func (f *FSH) ListInfo(hs *routing.HTTPSession) routing.HResult {
 		}
 		files, err = gfsdb.ListHashF(sha_a, md5_a)
 	} else if len(mark) > 0 {
-		files, err = gfsdb.ListMarkF(strings.Split(mark, ","))
+		files, mfids, err = gfsdb.ListMarkFv(strings.Split(mark, ","))
+		fmt.Println(files[0].Id, mfids)
 	} else {
 		return hs.MsgResE3(2, "arg-err", "at least one argments must be setted on fid/sha/md5/mark")
 	}
@@ -334,18 +339,38 @@ func (f *FSH) ListInfo(hs *routing.HTTPSession) routing.HResult {
 		return hs.MsgResErr2(1, "srv-err", err)
 	}
 	FilterTaskInfo(files)
-	log.D("FSH query file info by fid(%v)/sha(%v)/md5(%v)/mark(%v) success", fid, sha, md5, mark)
+	log.D("FSH query file info by fid(%v)/sha(%v)/md5(%v)/mark(%v)/pub(%v) success", fid, sha, md5, mark, pub)
 	var fis = []util.Map{}
+	var mfis = util.Map{}
+	var addf = func(file *gfsdb.F, mv util.Map) {
+		switch mode {
+		case "fid":
+			mfis[file.Id] = mv
+		case "sha":
+			mfis[file.SHA] = mv
+		case "md5":
+			mfis[file.MD5] = mv
+		case "mark":
+			if mark, ok := mfids[file.Id]; ok {
+				mfis[mark] = mv
+			}
+		case "pub":
+			mfis[file.Pub] = mv
+		default:
+			fis = append(fis, mv)
+		}
+	}
 	for _, file := range files {
 		if file.Exec != gfsdb.ES_RUNNING || ffcm.SRV == nil {
-			fis = append(fis, util.Map{
+			addf(file, util.Map{
 				"base": file,
 			})
+			continue
 		}
 		// log.D("FSH query file convert info by fid(%v)", fid)
 		total, res, err := ffcm.SRV.TaskRate(file.Id)
 		if err == nil {
-			fis = append(fis, util.Map{
+			addf(file, util.Map{
 				"base": file,
 				"exec": util.Map{
 					"total":  total,
@@ -354,13 +379,17 @@ func (f *FSH) ListInfo(hs *routing.HTTPSession) routing.HResult {
 				"url": fmt.Sprintf("%v/%v", f.Host, file.Pub),
 			})
 		} else {
-			fis = append(fis, util.Map{
+			addf(file, util.Map{
 				"base": file,
 				"err":  err,
 			})
 		}
 	}
-	return hs.MsgRes(fis)
+	if mode == "" {
+		return hs.MsgRes(fis)
+	} else {
+		return hs.MsgRes(mfis)
+	}
 }
 
 func (f *FSH) Hand(pre string, mux *routing.SessionMux) {
