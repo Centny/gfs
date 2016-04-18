@@ -48,7 +48,7 @@ func TestSrv(t *testing.T) {
 	gfsapi.SrvAddr = func() string {
 		return "http://127.0.0.1:2325"
 	}
-	_, err = gfsapi.DoUpF("gfs_test.go", "", "mark", "", "", "", 1, 1)
+	_, err = gfsapi.DoUpF("gfs_test.go", "", "maxxrk", "", "", "", 1, 1)
 	if err != nil {
 		t.Error("error")
 		return
