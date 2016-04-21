@@ -329,7 +329,6 @@ func (f *FSH) ListInfo(hs *routing.HTTPSession) routing.HResult {
 		files, err = gfsdb.ListHashF(sha_a, md5_a)
 	} else if len(mark) > 0 {
 		files, mfids, err = gfsdb.ListMarkFv(strings.Split(mark, ","))
-		fmt.Println(files[0].Id, mfids)
 	} else {
 		return hs.MsgResE3(2, "arg-err", "at least one argments must be setted on fid/sha/md5/mark")
 	}
