@@ -8,7 +8,7 @@ func TestHtml(hs *routing.HTTPSession) routing.HResult {
 	hs.SendT(`
 <html>
 <body>
-<form action="/usr/api/uload">
+<form action="/usr/api/uload" method="POST" enctype="multipart/form-data">
 <input type="file" name="file">
 <input type="submit" value="submit">
 <input type="reset" value="reset">
