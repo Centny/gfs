@@ -137,7 +137,11 @@ func (f *FSH) Up(hs *routing.HTTPSession) routing.HResult {
 			return hs.MsgResErr2(-5, "srv-err", err)
 		}
 	}
-	var pub_url = fmt.Sprintf("%v/%v", f.Host, rf.Pub)
+	host := f.Host
+	if len(host) < 1 {
+		host = "http://" + hs.R.Host
+	}
+	var pub_url = fmt.Sprintf("%v/%v", host, rf.Pub)
 	var args = util.Map{
 		"data":  pub_url,
 		"base":  rf,

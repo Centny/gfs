@@ -48,6 +48,7 @@ func main() {
 		var fcfg_s = util.NewFcfg3()
 		fcfg_s.InitWithFilePath2(cfg, true)
 		fcfg_s.Print()
+		gfsapi.ShowLog = true
 		redirect_l(fcfg_s)
 		fmt.Println(gfs.RunGFS_S(fcfg_s))
 		smartio.ResetStd()

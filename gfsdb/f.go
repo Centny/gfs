@@ -19,7 +19,11 @@ func FOI_F(rf *F) (int, error) {
 		return 0, util.Err("FOI_F the F.sha/F.md5 is empty ")
 	}
 	rf.Id = bson.NewObjectId().Hex()
-	rf.Exec = ES_NONE
+	if ffcm.SRV != nil && ffcm.SRV.MatchArgsV(rf.Id, rf.Id, rf.Path, "", filepath.Ext(rf.Path)) {
+		rf.Exec = ES_RUNNING
+	} else {
+		rf.Exec = ES_NONE
+	}
 	var mv = rf.ToBsonM()
 	delete(mv, "pub")
 	var res, err = C(CN_F).Find(bson.M{
@@ -48,19 +52,22 @@ func FOI_F(rf *F) (int, error) {
 		log.D("FOI_F adding really file(%v) on path(%v) success with ffcm server is not running", rf.Id, rf.Path)
 		return 1, nil
 	}
-	go func() {
-		var out = CreateOutPath(rf)
-		err = ffcm.SRV.AddTaskV(rf.Id, rf.Id, rf.Path, out, filepath.Ext(rf.Path))
-		if err == nil {
-			log.D("FOI_F adding really file(%v) on path(%v) success with ffcm task out path(%v)", rf.Id, rf.Path, out)
-		} else if dtm.IsNotMatchedErr(err) {
-			log.D("FOI_F adding really file(%v) on path(%v) success with not ffcm task matched", rf.Id, rf.Path)
-		} else {
-			log.E("FOI_F adding really file(%v) on path(%v) success, but add ffcm task to out path(%v) error->%v, will mark it to exec error", rf.Id, rf.Path, out, err)
-			update_exec(rf)
-		}
-	}()
+	go do_add_task(rf)
 	return res.Updated, nil
+}
+
+func do_add_task(rf *F) error {
+	var out = CreateOutPath(rf)
+	err := ffcm.SRV.AddTaskV(rf.Id, rf.Id, rf.Path, out, filepath.Ext(rf.Path))
+	if err == nil {
+		log.D("FOI_F adding really file(%v) on path(%v) success with ffcm task out path(%v)", rf.Id, rf.Path, out)
+	} else if dtm.IsNotMatchedErr(err) {
+		log.D("FOI_F adding really file(%v) on path(%v) success with not ffcm task matched", rf.Id, rf.Path)
+	} else {
+		log.E("FOI_F adding really file(%v) on path(%v) success, but add ffcm task to out path(%v) error->%v, will mark it to exec error", rf.Id, rf.Path, out, err)
+		update_exec(rf)
+	}
+	return err
 }
 
 func update_exec(rf *F) error {
@@ -186,6 +193,9 @@ func FindPubF(pub string) (*F, error) {
 func ListPubF(pub []string) ([]*F, error) {
 	return ListFv(bson.M{"pub": bson.M{"$in": pub}})
 }
+func ListShaF(sha []string) ([]*F, error) {
+	return ListFv(bson.M{"sha": bson.M{"$in": sha}})
+}
 
 func UpdateExecF(id, es string) error {
 	return C(CN_F).Update(
@@ -233,6 +243,12 @@ func (f *FFCM_H) ParseRes(task *dtm.Task, res util.Map) error {
 			return err
 		}
 		delete(data, "src")
+		if data.Exist("code") {
+			data["code"] = int(data.IntVal("code"))
+		}
+		if data.Exist("count") {
+			data["count"] = int(data.IntVal("count"))
+		}
 		res.SetVal(key, data)
 	}
 	return nil
@@ -275,4 +291,68 @@ func MapValV(v interface{}) interface{} {
 	} else {
 		return v
 	}
+}
+
+func SyncTask(exts, ignore []string) ([]string, error) {
+	var pipe = []bson.M{}
+	if len(exts) > 0 {
+		pipe = append(pipe, bson.M{
+			"$match": bson.M{
+				"ext": bson.M{
+					"$in": exts,
+				},
+			},
+		})
+	}
+	if len(ignore) > 0 {
+		pipe = append(pipe, bson.M{
+			"$match": bson.M{
+				"_id": bson.M{
+					"$nin": ignore,
+				},
+			},
+		})
+	}
+	pipe = append(pipe,
+		bson.M{
+			"$match": bson.M{
+				"exec": bson.M{
+					"$in": []string{ES_NONE, ES_RUNNING},
+				},
+			},
+		},
+		bson.M{
+			"$lookup": bson.M{
+				"from":         "ffcm_task",
+				"localField":   "_id",
+				"foreignField": "_id",
+				"as":           "task",
+			},
+		},
+		bson.M{
+			"$match": bson.M{
+				"task": bson.M{
+					"$size": 0,
+				},
+			},
+		},
+		bson.M{
+			"$limit": 100,
+		},
+	)
+	var fs = []*F{}
+	var err = C(CN_F).Pipe(pipe).All(&fs)
+	if err != nil {
+		log.E("SyncTask list file by exts(%v),ignore(%v) fail with error(%v), the pipe is \n%v\n", exts, ignore, err, util.S2Json(pipe))
+		return nil, err
+	}
+	log.D("SyncTask list file by exts(%v),ignore(%v) success with %v found", exts, ignore, len(fs))
+	var tignore = []string{}
+	for _, rf := range fs {
+		err = do_add_task(rf)
+		if err != nil {
+			tignore = append(tignore, rf.Id)
+		}
+	}
+	return tignore, nil
 }

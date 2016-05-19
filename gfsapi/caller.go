@@ -21,7 +21,7 @@ func DoUpF(file, name, mark, tags, folder, desc string, pub, recorded int) (util
 	var url = fmt.Sprintf(
 		"%v/usr/api/uload?name=%v&mark=%v&tags=%v&folder=%v&desc=%v&pub=%v&recorded=%v&%v",
 		SrvAddr(), name, mark, tags, folder, desc, pub, recorded, SrvArgs())
-	log.D("DoUpF upload file to %v", url)
+	log.D("DoUpF upload file(%v) to %v", file, url)
 	var res, err = util.HPostF2(url, nil, "file", file)
 	if err != nil {
 		return nil, err
@@ -121,4 +121,8 @@ func ReadBase64(path string) (string, error) {
 	} else {
 		return "", err
 	}
+}
+
+func DoAdmStatus() (util.Map, error) {
+	return util.HGet2("%v/adm/status?%v", SrvAddr(), SrvArgs())
 }

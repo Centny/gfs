@@ -228,6 +228,7 @@ func TestFFCM(t *testing.T) {
 		Path: "xx.mp4",
 		SHA:  "abc",
 		MD5:  "xyz",
+		EXT:  ".mp4",
 	}
 	ffcm.SRV.Db.(*dtm.MemH).Errs["Add"] = util.Err("mock error")
 	var _, err = FOI_F(&F{
@@ -240,6 +241,8 @@ func TestFFCM(t *testing.T) {
 		return
 	}
 	ffcm.SRV.Db.(*dtm.MemH).Errs["Add"] = nil
+
+	//
 	_, err = FOI_F(rt)
 	if err != nil {
 		t.Error(err.Error())
@@ -272,6 +275,57 @@ func TestFFCM(t *testing.T) {
 	}
 	fmt.Println("result->", util.S2Json(rt.Info))
 	fmt.Println(rt.Id)
+	//
+	//
+	//
+	//
+	mgo.C(CN_F).RemoveAll(nil)
+	mgo.C(CN_FILE).RemoveAll(nil)
+	_, err = FindF(rt.Id)
+	if err == nil {
+		t.Error("error")
+		return
+	}
+	fmt.Printf("err->%v\n", err)
+	//
+	var osrv = ffcm.SRV
+	ffcm.SRV = nil
+	rt.Info = nil
+	_, err = FOI_F(rt)
+	if err != nil {
+		t.Error(err.Error())
+		return
+	}
+	rt, err = FindF(rt.Id)
+	if err != nil {
+		t.Error(err.Error())
+		return
+	}
+	fmt.Println("waiting result...")
+	if len(rt.Info) > 0 {
+		fmt.Println(util.S2Json(rt.Info))
+		t.Error("error")
+		return
+	}
+	ffcm.SRV = osrv
+	_, err = SyncTask([]string{".mp4"}, []string{"abc"})
+	if err != nil {
+		t.Error(err.Error())
+		return
+	}
+	for {
+		rt, err = FindF(rt.Id)
+		if err != nil {
+			t.Error(err.Error())
+			return
+		}
+		fmt.Println("waiting result...")
+		if len(rt.Info) > 0 {
+			break
+		}
+		time.Sleep(time.Second)
+	}
+	fmt.Println("result->", util.S2Json(rt.Info))
 }
 
 func TestReg(t *testing.T) {
