@@ -10,6 +10,7 @@ import (
 	"github.com/Centny/gwf/routing"
 	"github.com/Centny/gwf/routing/filter"
 	"github.com/Centny/gwf/util"
+	"strings"
 )
 
 func RunGFS_C(fcfg *util.Fcfg) error {
@@ -40,5 +41,13 @@ func RunGFS_S(fcfg *util.Fcfg) error {
 	routing.Shared.Print()
 	var listen = fcfg.Val("listen")
 	log.D("listen web server on %v", listen)
+	go RunSyncTask(fcfg)
 	return routing.ListenAndServe(listen)
+}
+
+func RunSyncTask(fcfg *util.Fcfg) {
+	var exts = fcfg.Val("supported")
+	if len(exts) > 0 {
+		gfsdb.SyncAllTask(strings.Split(exts, ","))
+	}
 }

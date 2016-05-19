@@ -57,6 +57,10 @@ func FOI_F(rf *F) (int, error) {
 }
 
 func do_add_task(rf *F) error {
+	if ffcm.SRV == nil {
+		log.W("start ffcm task fail with the server is not running")
+		return nil
+	}
 	var out = CreateOutPath(rf)
 	err := ffcm.SRV.AddTaskV(rf.Id, rf.Id, rf.Path, out, filepath.Ext(rf.Path))
 	if err == nil {
@@ -73,7 +77,7 @@ func do_add_task(rf *F) error {
 func update_exec(rf *F) error {
 	var err = UpdateExecF(rf.Id, ES_ERROR)
 	if err == nil {
-		log.D("FOI_F mark really file(%v) to exec error success")
+		log.D("FOI_F mark really file(%v) to exec error success", rf.Id)
 	} else {
 		log.E("FOI_F mark really file(%v) to exec error fail with error->%v", rf.Id, err)
 	}
@@ -293,66 +297,77 @@ func MapValV(v interface{}) interface{} {
 	}
 }
 
-func SyncTask(exts, ignore []string) ([]string, error) {
-	var pipe = []bson.M{}
-	if len(exts) > 0 {
-		pipe = append(pipe, bson.M{
-			"$match": bson.M{
-				"ext": bson.M{
-					"$in": exts,
+func ListTaskIds() ([]string, error) {
+	var pipe = []bson.M{
+		bson.M{
+			"$group": bson.M{
+				"_id": 0,
+				"ids": bson.M{
+					"$push": "$_id",
 				},
 			},
-		})
+		},
 	}
-	if len(ignore) > 0 {
-		pipe = append(pipe, bson.M{
-			"$match": bson.M{
-				"_id": bson.M{
-					"$nin": ignore,
-				},
-			},
-		})
-	}
-	pipe = append(pipe,
-		bson.M{
-			"$match": bson.M{
-				"exec": bson.M{
-					"$in": []string{ES_NONE, ES_RUNNING},
-				},
-			},
-		},
-		bson.M{
-			"$lookup": bson.M{
-				"from":         "ffcm_task",
-				"localField":   "_id",
-				"foreignField": "_id",
-				"as":           "task",
-			},
-		},
-		bson.M{
-			"$match": bson.M{
-				"task": bson.M{
-					"$size": 0,
-				},
-			},
-		},
-		bson.M{
-			"$limit": 100,
-		},
-	)
-	var fs = []*F{}
-	var err = C(CN_F).Pipe(pipe).All(&fs)
+	var res []util.Map
+	var err = C("ffcm_task").Pipe(pipe).All(&res)
 	if err != nil {
-		log.E("SyncTask list file by exts(%v),ignore(%v) fail with error(%v), the pipe is \n%v\n", exts, ignore, err, util.S2Json(pipe))
 		return nil, err
 	}
+	if len(res) > 0 {
+		return res[0].AryStrVal("ids"), nil
+	} else {
+		return nil, nil
+	}
+}
+
+func SyncTask(exts, ignore []string, limit int) (int, []string, error) {
+	var query = bson.M{
+		"exec": bson.M{
+			"$in": []string{ES_NONE, ES_RUNNING},
+		},
+	}
+	if len(exts) > 0 {
+		query["ext"] = bson.M{
+			"$in": exts,
+		}
+	}
+	if len(ignore) > 0 {
+		query["_id"] = bson.M{
+			"$nin": ignore,
+		}
+	}
+	var fs = []*F{}
+	var err = C(CN_F).Find(query).Limit(limit).All(&fs)
+	if err != nil {
+		log.E("SyncTask list file by exts(%v),ignore(%v) fail with error(%v), the query is \n%v\n", exts, ignore, err, util.S2Json(query))
+		return 0, nil, err
+	}
 	log.D("SyncTask list file by exts(%v),ignore(%v) success with %v found", exts, ignore, len(fs))
-	var tignore = []string{}
 	for _, rf := range fs {
 		err = do_add_task(rf)
 		if err != nil {
-			tignore = append(tignore, rf.Id)
+			ignore = append(ignore, rf.Id)
 		}
 	}
-	return tignore, nil
+	return len(fs), ignore, nil
+}
+
+func SyncAllTask(exts []string) (total int, err error) {
+	var matched int = 0
+	var ignore []string
+	ignore, err = ListTaskIds()
+	if err != nil {
+		return 0, err
+	}
+	for {
+		matched, ignore, err = SyncTask(exts, ignore, 100)
+		if err != nil {
+			return
+		}
+		if matched < 1 {
+			break
+		}
+		total += matched
+	}
+	return
 }

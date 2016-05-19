@@ -308,11 +308,13 @@ func TestFFCM(t *testing.T) {
 		return
 	}
 	ffcm.SRV = osrv
-	_, err = SyncTask([]string{".mp4"}, []string{"abc"})
+	fmt.Println("xxx->a")
+	_, _, err = SyncTask([]string{".mp4"}, []string{"abc"}, 100)
 	if err != nil {
 		t.Error(err.Error())
 		return
 	}
+
 	for {
 		rt, err = FindF(rt.Id)
 		if err != nil {
@@ -326,6 +328,30 @@ func TestFFCM(t *testing.T) {
 		time.Sleep(time.Second)
 	}
 	fmt.Println("result->", util.S2Json(rt.Info))
+	//
+	//
+	//
+	//
+	mgo.C(CN_F).RemoveAll(nil)
+	mgo.C(CN_FILE).RemoveAll(nil)
+	_, err = FindF(rt.Id)
+	if err == nil {
+		t.Error("error")
+		return
+	}
+	total, err := SyncAllTask([]string{".mp4"})
+	if err != nil || total > 0 {
+		fmt.Println(err, total)
+		t.Error("error")
+		return
+	}
+	mgo.C("ffcm_task").Insert(bson.M{"_id": rt.Id})
+	total, err = SyncAllTask([]string{".mp4"})
+	if err != nil || total > 0 {
+		fmt.Println(err, total)
+		t.Error("error")
+		return
+	}
 }
 
 func TestReg(t *testing.T) {
