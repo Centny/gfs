@@ -116,7 +116,7 @@ func (f *FSH) Up(hs *routing.HTTPSession) routing.HResult {
 	}
 	rf.Time, rf.Status = util.Now(), "N"
 	if pub > 0 {
-		rf.Pub = util.ShortLink(rf.SHA + rf.MD5 + rf.EXT)
+		rf.Pub = util.ShortLink(rf.SHA + rf.MD5)
 	}
 	updated, err := gfsdb.FOI_F(rf)
 	if err != nil {
