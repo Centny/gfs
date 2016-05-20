@@ -44,6 +44,7 @@ func FOI_F(rf *F) (int, error) {
 	if err != nil {
 		return 0, err
 	}
+	log.D("FOI_F adding file success->%v", util.S2Json(rf))
 	if res.UpsertedId == nil || len(res.UpsertedId.(string)) < 1 {
 		log.D("FOI_F adding really file(%v) on path(%v) success with file already exist", rf.Id, rf.Path)
 		return 0, nil
