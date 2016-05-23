@@ -7,6 +7,8 @@ import (
 	"github.com/Centny/gfs/gfsapi"
 	"github.com/Centny/gfs/gfsdb"
 	"github.com/Centny/gwf/log"
+	"github.com/Centny/gwf/netw"
+	"github.com/Centny/gwf/netw/impl"
 	"github.com/Centny/gwf/routing"
 	"github.com/Centny/gwf/routing/filter"
 	"github.com/Centny/gwf/util"
@@ -22,6 +24,10 @@ func RunGFS_S(fcfg *util.Fcfg) error {
 	if err != nil {
 		return err
 	}
+	var showlog = fcfg.Val2("showlog", "0") == "1"
+	netw.ShowLog = showlog
+	netw.ShowLog_C = showlog
+	impl.ShowLog = showlog
 	gfsdb.C = mgo.C
 	fsh, err := gfsapi.NewFSH2(fcfg)
 	if err != nil {
