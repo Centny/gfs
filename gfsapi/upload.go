@@ -103,8 +103,8 @@ func (f *FSH) Up(hs *routing.HTTPSession) routing.HResult {
 		log.D("FSH upload receive bad arguments error:%v", err.Error())
 		return hs.MsgResErr2(-1, "arg-err", err)
 	}
-	log.D("FSH receive file upload by pub(%v),base64(%v),name(%v),mark(%v),tags(%v),folder(%v)",
-		pub, base64, name, mark, tags, folder)
+	log.D("FSH receive file upload by pub(%v),base64(%v),name(%v),mark(%v),tags(%v),folder(%v),mode(%v)",
+		pub, base64, name, mark, tags, folder, f.Mode)
 	var rf = &gfsdb.F{}
 	if base64 == 0 {
 		err = f.do_file(hs, rf, name)
