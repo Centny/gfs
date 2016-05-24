@@ -391,6 +391,15 @@ func (f *FSH) ListInfo(hs *routing.HTTPSession) routing.HResult {
 	}
 }
 
+func SetMock(hs *routing.HTTPSession) routing.HResult {
+	if hs.RVal("start_err") == "1" {
+		gfsdb.MockStartTaskErr = 1
+	} else {
+		gfsdb.MockStartTaskErr = 0
+	}
+	return hs.MsgRes("OK")
+}
+
 func (f *FSH) Hand(pre string, mux *routing.SessionMux) {
 	mux.HFunc("^"+pre+"/pub/api/info(\\?.*)?", f.Info)
 	mux.HFunc("^"+pre+"/pub/api/listInfo(\\?.*)?", f.ListInfo)

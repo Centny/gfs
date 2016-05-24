@@ -11,6 +11,8 @@ import (
 	"reflect"
 )
 
+var MockStartTaskErr int = 0
+
 func FOI_F(rf *F) (int, error) {
 	if len(rf.Path) < 1 {
 		return 0, util.Err("FOI_F the F.path is empty ")
@@ -63,7 +65,10 @@ func do_add_task(rf *F) error {
 		return nil
 	}
 	var out = CreateOutPath(rf)
-	err := ffcm.SRV.AddTaskV(rf.Id, rf.Id, rf.Path, out, filepath.Ext(rf.Path))
+	var err error = util.Err("Mock Error")
+	if MockStartTaskErr < 1 {
+		err = ffcm.SRV.AddTaskV(rf.Id, rf.Id, rf.Path, out, filepath.Ext(rf.Path))
+	}
 	if err == nil {
 		log.D("FOI_F adding really file(%v) on path(%v) success with ffcm task out path(%v)", rf.Id, rf.Path, out)
 	} else if dtm.IsNotMatchedErr(err) {
