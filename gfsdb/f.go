@@ -324,7 +324,7 @@ func ListTaskIds() ([]string, error) {
 func SyncTask(exts, ignore []string, limit int) (int, []string, error) {
 	var query = bson.M{
 		"exec": bson.M{
-			"$in": []string{ES_NONE, ES_RUNNING},
+			"$in": []string{ES_ERROR, ES_RUNNING},
 		},
 	}
 	if len(exts) > 0 {
