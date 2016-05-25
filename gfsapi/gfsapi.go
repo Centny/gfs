@@ -10,6 +10,7 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+	"time"
 )
 
 var ShowLog bool = false
@@ -44,7 +45,11 @@ func (f *FBaseImpl) NewFile(hs *routing.HTTPSession, filename string) (string, s
 	if len(sub) < 1 || len(f.Subs[sub]) < 1 {
 		sub = ext
 	}
-	return f.Base, fmt.Sprintf("%v%v%v%v", f.Pre, util.UUID(), f.Subs[sub], ext)
+	var pre = f.Pre
+	if strings.Contains(pre, "%v") {
+		pre = fmt.Sprintf(pre, time.Now().Format("2006-01-02"))
+	}
+	return f.Base, fmt.Sprintf("%v%v%v%v", pre, util.UUID(), f.Subs[sub], ext)
 }
 func (f *FBaseImpl) AbsPath(hs *routing.HTTPSession, path string) string {
 	return filepath.Join(f.Base, path)
