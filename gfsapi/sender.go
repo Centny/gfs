@@ -43,7 +43,7 @@ func (d *DefaultSender) DoH(hs *routing.HTTPSession, rf *gfsdb.F, etype string, 
 		var header = hs.W.Header()
 		header.Set("Content-Disposition", fmt.Sprintf("attachment; filename=%s", url.QueryEscape(rf.Name)))
 	}
-	slog("DefaultSender do normal http file server to %v", hs.R.URL.Path)
+	slog("DefaultSender do normal http file server(%v) to %v", d.FH, hs.R.URL.Path)
 	d.FH.ServeHTTP(hs.W, hs.R)
 	return routing.HRES_RETURN
 }
