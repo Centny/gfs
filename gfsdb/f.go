@@ -21,6 +21,19 @@ func FOI_F(rf *F) (int, error) {
 		return 0, util.Err("FOI_F the F.sha/F.md5 is empty ")
 	}
 	rf.Id = bson.NewObjectId().Hex()
+	if ffcm.SRV != nil && ffcm.SRV.MatchLocArgsV(rf.Id, rf.Id, rf.Path, "", filepath.Ext(rf.Path)) {
+		var out = CreateOutPath(rf)
+		res, err := ffcm.SRV.RunLocTaskV(rf.Id, rf.Id, rf.Path, out, filepath.Ext(rf.Path))
+		if err != nil {
+			err = util.Err("FOI_F running local task fail with error->%v", err)
+			log.E("%v", err)
+			return 0, err
+		}
+		rf.Info = util.Map{}
+		for key, val := range res {
+			rf.Info[key] = val
+		}
+	}
 	if ffcm.SRV != nil && ffcm.SRV.MatchArgsV(rf.Id, rf.Id, rf.Path, "", filepath.Ext(rf.Path)) {
 		rf.Exec = ES_RUNNING
 	} else {
