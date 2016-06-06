@@ -30,8 +30,14 @@ func FOI_F(rf *F) (int, error) {
 			return 0, err
 		}
 		rf.Info = util.Map{}
-		for key, val := range res {
-			rf.Info[key] = val
+		for key, _ := range res {
+			data := res.MapValP("/" + key + "/data")
+			if data == nil {
+				err = util.Err("FOI_F running local task fail with error(result data is nil), the all data is %v", util.S2Json(res))
+				log.E("%v", err)
+				return 0, err
+			}
+			rf.Info[key] = data
 		}
 	}
 	if ffcm.SRV != nil && ffcm.SRV.MatchArgsV(rf.Id, rf.Id, rf.Path, "", filepath.Ext(rf.Path)) {
