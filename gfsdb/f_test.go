@@ -10,6 +10,7 @@ import (
 	"github.com/Centny/gwf/util"
 	tmgo "gopkg.in/mgo.v2"
 	"gopkg.in/mgo.v2/bson"
+	"os"
 	"regexp"
 	"runtime"
 	"testing"
@@ -218,12 +219,39 @@ func TestF(t *testing.T) {
 	//
 }
 
+func test_img(t *testing.T) {
+	var rt = &F{
+		Path: "xx.jpg",
+		SHA:  "abcsd",
+		MD5:  "xydfsfz",
+		EXT:  ".jpg",
+	}
+	_, err := FOI_F(rt)
+	if err != nil {
+		t.Error(err.Error())
+		return
+	}
+	for {
+		rt, err = FindF(rt.Id)
+		if err != nil {
+			t.Error(err.Error())
+			return
+		}
+		fmt.Println("xxb->waiting result...")
+		if len(rt.Info) > 0 {
+			break
+		}
+		time.Sleep(time.Second)
+	}
+}
 func TestFFCM(t *testing.T) {
 	runtime.GOMAXPROCS(util.CPU())
 	mgo.C(CN_F).RemoveAll(nil)
-	ffcm.StartTest("../../ffcm/ffcm_s.properties", "../../ffcm/ffcm_c.properties", dtm.MemDbc, NewFFCM_H())
+	ffcm.StartTest("../gfs_s.properties", "../gfs_c.properties", dtm.MemDbc, NewFFCM_H())
 	time.Sleep(3 * time.Second)
 	fmt.Println(ffcm.SRV)
+	///
+	test_img(t)
 	var rt = &F{
 		Path: "xx.mp4",
 		SHA:  "abc",
@@ -237,10 +265,11 @@ func TestFFCM(t *testing.T) {
 		MD5:  "xyzfd",
 	})
 	if err != nil {
-		t.Error("error")
+		t.Error(err)
 		return
 	}
 	ffcm.SRV.Db.(*dtm.MemH).Errs["Add"] = nil
+	os.RemoveAll("tmp")
 
 	//
 	_, err = FOI_F(rt)
@@ -267,7 +296,7 @@ func TestFFCM(t *testing.T) {
 			t.Error(err.Error())
 			return
 		}
-		fmt.Println("waiting result...")
+		fmt.Println("xxb->waiting result...")
 		if len(rt.Info) > 0 {
 			break
 		}
@@ -279,6 +308,7 @@ func TestFFCM(t *testing.T) {
 	//
 	//
 	//
+	fmt.Println("\n\n\n<--------------------------------------------->\n\n\n")
 	mgo.C(CN_F).RemoveAll(nil)
 	mgo.C(CN_FILE).RemoveAll(nil)
 	_, err = FindF(rt.Id)
@@ -288,8 +318,7 @@ func TestFFCM(t *testing.T) {
 	}
 	fmt.Printf("err->%v\n", err)
 	//
-	var osrv = ffcm.SRV
-	ffcm.SRV = nil
+	os.Chmod("tmp", 0)
 	rt.Info = nil
 	_, err = FOI_F(rt)
 	if err != nil {
@@ -307,8 +336,22 @@ func TestFFCM(t *testing.T) {
 		t.Error("error")
 		return
 	}
-	ffcm.SRV = osrv
+	time.Sleep(100 * time.Millisecond)
+	for {
+		task, err := ffcm.SRV.Db.Find(rt.Id)
+		if err != nil || task == nil {
+			t.Error(err)
+			return
+		}
+		fmt.Println("xxa_0->waiting error...")
+		if task.Status == "COV_ERR" {
+			break
+		}
+		time.Sleep(time.Second)
+	}
+	os.RemoveAll("tmp")
 	fmt.Println("xxx->a")
+	ffcm.SRV.Db.Del(&dtm.Task{Id: rt.Id})
 	_, _, err = SyncTask([]string{".mp4"}, []string{"abc"}, 100)
 	if err != nil {
 		t.Error(err.Error())
@@ -321,7 +364,7 @@ func TestFFCM(t *testing.T) {
 			t.Error(err.Error())
 			return
 		}
-		fmt.Println("waiting result...")
+		fmt.Println("xx_001->waiting result...")
 		if len(rt.Info) > 0 {
 			break
 		}
@@ -352,6 +395,10 @@ func TestFFCM(t *testing.T) {
 		t.Error("error")
 		return
 	}
+}
+
+func TestImg(t *testing.T) {
+
 }
 
 func TestReg(t *testing.T) {

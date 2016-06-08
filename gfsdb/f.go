@@ -21,25 +21,6 @@ func FOI_F(rf *F) (int, error) {
 		return 0, util.Err("FOI_F the F.sha/F.md5 is empty ")
 	}
 	rf.Id = bson.NewObjectId().Hex()
-	if ffcm.SRV != nil && ffcm.SRV.MatchLocArgsV(rf.Id, rf.Id, rf.Path, "", filepath.Ext(rf.Path)) {
-		var out = CreateOutPath(rf)
-		res, err := ffcm.SRV.RunLocTaskV(rf.Id, rf.Id, rf.Path, out, filepath.Ext(rf.Path))
-		if err != nil {
-			err = util.Err("FOI_F running local task fail with error->%v", err)
-			log.E("%v", err)
-			return 0, err
-		}
-		rf.Info = util.Map{}
-		for key, _ := range res {
-			data := res.MapValP("/" + key + "/data")
-			if data == nil {
-				err = util.Err("FOI_F running local task fail with error(result data is nil), the all data is %v", util.S2Json(res))
-				log.E("%v", err)
-				return 0, err
-			}
-			rf.Info[key] = data
-		}
-	}
 	if ffcm.SRV != nil && ffcm.SRV.MatchArgsV(rf.Id, rf.Id, rf.Path, "", filepath.Ext(rf.Path)) {
 		rf.Exec = ES_RUNNING
 	} else {
@@ -74,8 +55,47 @@ func FOI_F(rf *F) (int, error) {
 		log.D("FOI_F adding really file(%v) on path(%v) success with ffcm server is not running", rf.Id, rf.Path)
 		return 1, nil
 	}
+	if ffcm.SRV.MatchLocArgsV(rf.Id, rf.Id, rf.Path, "", filepath.Ext(rf.Path)) {
+		log.D("FOI_F adding really file(%v) on path(%v) by doing local task", rf.Id, rf.Path)
+		var out = CreateOutPath(rf)
+		res, err := ffcm.SRV.RunLocTaskV(rf.Id, rf.Id, rf.Path, out, filepath.Ext(rf.Path))
+		if err != nil {
+			err = util.Err("FOI_F running local task fail with error->%v", err)
+			log.E("%v", err)
+			do_remove(rf.Id)
+			return 0, err
+		}
+		if len(res) > 0 {
+			if rf.Info == nil {
+				rf.Info = util.Map{}
+			}
+			var setv = bson.M{}
+			for key, _ := range res {
+				data := res.MapValP("/" + key + "/data")
+				if data == nil {
+					err = util.Err("FOI_F running local task fail with error(result data is nil), the all data is %v", util.S2Json(res))
+					log.E("%v", err)
+					do_remove(rf.Id)
+					return 0, err
+				}
+				rf.Info[key] = data
+				setv["info."+key] = data
+			}
+			err = UpdateF(rf.Id, setv)
+			if err != nil {
+				err = util.Err("FOI_F running local task fail with update file error(%v)", err)
+				log.E("%v", err)
+				do_remove(rf.Id)
+				return 0, err
+			}
+		}
+	}
 	go do_add_task(rf)
 	return res.Updated, nil
+}
+
+func do_remove(id string) error {
+	return C(CN_F).RemoveId(id)
 }
 
 func do_add_task(rf *F) error {
@@ -293,10 +313,13 @@ func (f *FFCM_H) OnDone(dtcm *dtm.DTCM_S, task *dtm.Task) error {
 		info["info"] = task.Info
 		info["error"] = err.Error()
 	}
-	return UpdateF(task.Id, bson.M{
-		"info": info,
+	var setv = bson.M{
 		"exec": ES_DONE,
-	})
+	}
+	for key, val := range info {
+		setv["info."+key] = val
+	}
+	return UpdateF(task.Id, setv)
 }
 
 func MapVal(v interface{}) (util.Map, bool) {

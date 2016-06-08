@@ -8,6 +8,7 @@ import (
 	"github.com/Centny/gwf/routing"
 	"github.com/Centny/gwf/util"
 	"mime/multipart"
+	"os"
 	"path/filepath"
 	"strings"
 )
@@ -122,6 +123,7 @@ func (f *FSH) Up(hs *routing.HTTPSession) routing.HResult {
 	if err != nil {
 		err = util.Err("FSH find or insert really file by (%v) error->%v", util.S2Json(rf), err)
 		log.E("%v", err)
+		os.Remove(f.Base.AbsPath(hs, rf.Path))
 		return hs.MsgResErr2(-3, "srv-err", err)
 	}
 	if len(mark) > 0 {
