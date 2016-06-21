@@ -2,6 +2,7 @@ package gfsdb
 
 import (
 	"github.com/Centny/gwf/util"
+	"gopkg.in/mgo.v2"
 	"gopkg.in/mgo.v2/bson"
 )
 
@@ -97,4 +98,42 @@ type Floder struct {
 	Subs   []string `bson:"subs" json:"subs"`     //the tags
 	Status string   `bson:"status" json:"status"` //file status
 	Time   int64    `bson:"time" json:"time"`     //create time.
+}
+
+var Indexes = map[string]map[string]mgo.Index{
+	CN_F: map[string]mgo.Index{
+		"f_name": mgo.Index{
+			Key: []string{"name"},
+		},
+		"f_filename": mgo.Index{
+			Key: []string{"filename"},
+		},
+		"f_pub": mgo.Index{
+			Key: []string{"pub"},
+		},
+		"f_sha": mgo.Index{
+			Key: []string{"sha"},
+		},
+		"f_md5": mgo.Index{
+			Key: []string{"md5"},
+		},
+		"f_ext": mgo.Index{
+			Key: []string{"ext"},
+		},
+		"f_size": mgo.Index{
+			Key: []string{"size"},
+		},
+		"f_type": mgo.Index{
+			Key: []string{"type"},
+		},
+		"f_exec": mgo.Index{
+			Key: []string{"exec"},
+		},
+		"f_status": mgo.Index{
+			Key: []string{"status"},
+		},
+		"f_time": mgo.Index{
+			Key: []string{"time"},
+		},
+	},
 }

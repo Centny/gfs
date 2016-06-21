@@ -25,6 +25,10 @@ func RunGFS_S(fcfg *util.Fcfg) error {
 	if err != nil {
 		return err
 	}
+	err = mgo.ChkIdx(mgo.C, gfsdb.Indexes)
+	if err != nil {
+		return err
+	}
 	var showlog = fcfg.Val2("showlog", "0") == "1"
 	netw.ShowLog = showlog
 	netw.ShowLog_C = showlog
