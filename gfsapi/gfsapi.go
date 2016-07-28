@@ -218,28 +218,39 @@ func (f *FSH) Info(hs *routing.HTTPSession) routing.HResult {
 	}
 	FilterTaskInfo([]*gfsdb.F{file})
 	log.D("FSH query file info by fid(%v)/sha(%v)/md5(%v)/mark(%v) success", fid, sha, md5, mark)
+	var mres = util.Map{
+		"base": file,
+	}
+	if len(file.Pub) > 0 {
+		mres["url"] = fmt.Sprintf("%v/%v", f.Host, file.Pub)
+	}
 	if file.Exec != gfsdb.ES_RUNNING || ffcm.SRV == nil {
-		return hs.MsgRes(util.Map{
-			"base": file,
-		})
+		return hs.MsgRes(mres)
 	}
 	log.D("FSH query file convert info by fid(%v)", fid)
+	task, err := ffcm.SRV.Db.Find(file.Id)
+	if err == nil {
+		mres["task"] = util.Map{
+			"status": task.Status,
+		}
+	} else {
+		mres["task"] = util.Map{
+			"err": err.Error(),
+		}
+		return hs.MsgRes(mres)
+	}
 	total, res, err := ffcm.SRV.TaskRate(file.Id)
 	if err == nil {
-		return hs.MsgRes(util.Map{
-			"base": file,
-			"exec": util.Map{
-				"total":  total,
-				"detail": res,
-			},
-			"url": fmt.Sprintf("%v/%v", f.Host, file.Pub),
-		})
+		mres["exec"] = util.Map{
+			"total":  total,
+			"detail": res,
+		}
 	} else {
-		return hs.MsgRes(util.Map{
-			"base": file,
-			"err":  err,
-		})
+		mres["exec"] = util.Map{
+			"err": err.Error(),
+		}
 	}
+	return hs.MsgRes(mres)
 }
 
 //List File Info
