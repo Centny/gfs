@@ -88,12 +88,5 @@ func main() {
 func redirect_l(fcfg *util.Fcfg) {
 	var out_l = fcfg.Val2("out_l", "")
 	var err_l = fcfg.Val2("err_l", "")
-	fmt.Printf("redirect stdout to file(%v) and stderr to file(%v)\n", out_l, err_l)
-	if len(out_l) > 0 {
-		smartio.RedirectStdout3(out_l)
-	}
-	if len(err_l) > 0 {
-		smartio.RedirectStderr3(err_l)
-	}
-	log.SetWriter(os.Stdout)
+	log.RedirectV(out_l, err_l, false)
 }
