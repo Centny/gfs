@@ -231,6 +231,7 @@ func (f *FSH) Info(hs *routing.HTTPSession) routing.HResult {
 	task, err := ffcm.SRV.Db.Find(file.Id)
 	if err == nil {
 		mres["task"] = util.Map{
+			"code":   task.Code,
 			"status": task.Status,
 		}
 	} else {
