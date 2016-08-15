@@ -169,6 +169,7 @@ func TestUpDown(t *testing.T) {
 			var info = res.MapValP("/base/info")
 			if info == nil || len(info) < 1 { //convert fail
 				t.Error("error")
+				fmt.Println(res)
 				return
 			}
 			break
@@ -536,10 +537,10 @@ func TestUpDown(t *testing.T) {
 	gfsdb.UpdateF(fid, bson.M{"exec": gfsdb.ES_RUNNING})
 	res, err = DoInfo(fid, "", "", "", "")
 	if err != nil {
-		t.Error("error")
+		t.Error(err)
 		return
 	}
-	if res.Val("err") == nil {
+	if v, _ := res.ValP("/task/err"); v == nil {
 		t.Error("error")
 		return
 	}

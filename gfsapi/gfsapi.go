@@ -367,8 +367,10 @@ func (f *FSH) ListInfo(hs *routing.HTTPSession) routing.HResult {
 		case "md5":
 			mfis[file.MD5] = mv
 		case "mark":
-			if mark, ok := mfids[file.Id]; ok {
-				mfis[mark] = mv
+			for mark, fid := range mfids {
+				if file.Id == fid {
+					mfis[mark] = mv
+				}
 			}
 		case "pub":
 			mfis[file.Pub] = mv

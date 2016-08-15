@@ -227,7 +227,8 @@ func ListMarkFv(mark []string) ([]*F, map[string]string, error) {
 	var mfids = map[string]string{}
 	for _, m := range mk {
 		fids = append(fids, m.Fid)
-		mfids[m.Fid] = m.Id
+		mfids[m.Id] = m.Fid
+		// mfids[m.Fid] = m.Id
 	}
 	fs, err := ListF(fids)
 	return fs, mfids, err
