@@ -306,19 +306,22 @@ func (f *FFCM_H) ParseRes(task *dtm.Task, res util.Map) error {
 func (f *FFCM_H) OnDone(dtcm *dtm.DTCM_S, task *dtm.Task) error {
 	log.D("FFCM_H receive done for task(%v)", task.Id)
 	var info = util.Map{}
-	var err = f.ParseRes(task, info)
-	if err == nil {
-		info["code"] = 0
+	var setv = bson.M{}
+	if task.Code == 0 {
+		var err = f.ParseRes(task, info)
+		if err == nil {
+			info["code"] = 0
+		} else {
+			info["code"] = 1
+			info["info"] = task.Info
+			info["error"] = err.Error()
+		}
+		setv["exec"] = ES_DONE
+		for key, val := range info {
+			setv["info."+key] = val
+		}
 	} else {
-		info["code"] = 1
-		info["info"] = task.Info
-		info["error"] = err.Error()
-	}
-	var setv = bson.M{
-		"exec": ES_DONE,
-	}
-	for key, val := range info {
-		setv["info."+key] = val
+		setv["exec"] = ES_ERROR
 	}
 	return UpdateF(task.Id, setv)
 }
