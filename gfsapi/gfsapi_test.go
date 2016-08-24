@@ -40,10 +40,18 @@ func TestUpDown(t *testing.T) {
 	os.RemoveAll("www")
 	os.RemoveAll("out")
 	os.RemoveAll("tmp")
-	var folder = &gfsdb.Floder{
-		Status: "N",
+	var folder = &gfsdb.File{
+		Name:   "xx",
+		Oid:    "11",
+		Owner:  "USR",
+		Status: gfsdb.FS_N,
+		Type:   gfsdb.FT_FOLDER,
 	}
-	gfsdb.AddFolder(folder)
+	var _, err = gfsdb.FOI_File(folder)
+	if err != nil {
+		t.Error("error")
+		return
+	}
 	ffcm.StartTest2("../gfs_s.properties", "../gfs_c.properties", gfsdb.NewFFCM_H())
 	time.Sleep(2 * time.Second)
 	if ffcm.SRV == nil {
@@ -51,7 +59,7 @@ func TestUpDown(t *testing.T) {
 		return
 	}
 	var fcfg = util.NewFcfg3()
-	var err = fcfg.InitWithFilePath2("../gfs_s.properties", false)
+	err = fcfg.InitWithFilePath2("../gfs_s.properties", false)
 	if err != nil {
 		t.Error(err.Error())
 		return
@@ -86,6 +94,8 @@ func TestUpDown(t *testing.T) {
 	var md5 = res.StrValP("/base/md5")
 	var pub = res.StrValP("/base/pub")
 	var url = res.StrValP("/url")
+	var file_id = res.StrValP("/file/id")
+	// fmt.Println(util.S2Json(res))
 	var tf, _ = gfsdb.FindF(fid)
 	var path = tf.Path
 	if len(fid) < 1 || len(sha) < 1 || len(pub) < 1 || len(path) < 1 {
@@ -279,6 +289,24 @@ func TestUpDown(t *testing.T) {
 		return
 	}
 	if len(resm) < 1 {
+		t.Error("error")
+		return
+	}
+	//
+	//test list file
+	// err = DoUpdateFile(file_id, "xxx", "", nil)
+	// if err != nil {
+	// 	t.Error(err)
+	// 	return
+	// }
+	res, err = DoListFile("", "", nil, nil)
+	if err != nil {
+		t.Error(err.Error())
+		return
+	}
+	if len(res.AryMapVal("files")) < 1 || len(res.MapVal("bases")) < 1 {
+		fmt.Println(util.S2Json(res))
+		fmt.Println(file_id)
 		t.Error("error")
 		return
 	}

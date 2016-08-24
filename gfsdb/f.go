@@ -170,6 +170,18 @@ func ListF(ids []string) ([]*F, error) {
 	return ListFv(bson.M{"_id": bson.M{"$in": ids}})
 }
 
+func ListF_m(ids []string) (map[string]*F, error) {
+	var fs, err = ListF(ids)
+	if err != nil {
+		return nil, err
+	}
+	var fs_m = map[string]*F{}
+	for _, f := range fs {
+		fs_m[f.Id] = f
+	}
+	return fs_m, nil
+}
+
 func FindHashF(sha, md5 string) (*F, error) {
 	var query = []bson.M{}
 	if len(sha) > 0 {

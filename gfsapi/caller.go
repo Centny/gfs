@@ -126,3 +126,31 @@ func ReadBase64(path string) (string, error) {
 func DoAdmStatus() (util.Map, error) {
 	return util.HGet2("%v/adm/status?%v", SrvAddr(), SrvArgs())
 }
+
+func DoListFile(name, typ string, pid, tags []string) (util.Map, error) {
+	var res, err = util.HGet2(
+		"%v/usr/api/listFile?name=%v&type=%v&pid=%v&tags=%v&%v",
+		SrvAddr(), name, typ, strings.Join(pid, ","), strings.Join(tags, ","), SrvArgs())
+	if err != nil {
+		return nil, err
+	}
+	if res.IntVal("code") == 0 {
+		return res.MapVal("data"), nil
+	} else {
+		return nil, util.Err("list file error->%v", util.S2Json(res))
+	}
+}
+
+func DoUpdateFile(fid, name, desc string, tags []string) error {
+	var res, err = util.HGet2(
+		"%v/usr/api/updateFile?fid=%v&name=%v&desc=%v&tags=%v&%v",
+		SrvAddr(), fid, name, strings.Join(tags, ","), SrvArgs())
+	if err != nil {
+		return err
+	}
+	if res.IntVal("code") == 0 {
+		return nil
+	} else {
+		return util.Err("list file error->%v", util.S2Json(res))
+	}
+}

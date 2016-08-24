@@ -13,6 +13,15 @@ const (
 	ES_NONE    = "none"
 )
 
+const (
+	FS_N = "N" //normal
+	FS_D = "D" //deleted
+)
+const (
+	FT_FILE   = "file"
+	FT_FOLDER = "folder"
+)
+
 type F struct {
 	Id       string   `bson:"_id" json:"id"`
 	Name     string   `bson:"name" json:"name"`
@@ -77,27 +86,15 @@ type Mark struct {
 type File struct {
 	Id     string   `bson:"_id" json:"id"`
 	Fid    string   `bson:"fid" json:"fid"`
+	Pid    string   `bson:"pid" json:"pid"`
 	Oid    string   `bson:"oid" json:"oid"`
 	Owner  string   `bson:"owner" json:"owner"`
 	Name   string   `bson:"name" json:"name"`
+	Type   string   `bson:"type" json:"type"` //type
 	Tags   []string `bson:"tags" json:"tags"`
 	Desc   string   `bson:"desc" json:"desc"`
-	Folder string   `bson:"folder" json:"floder"`
 	Status string   `bson:"status" json:"status"` //file status
 	Time   int64    `bson:"time" json:"time"`     //upload time.
-}
-
-type Floder struct {
-	Id     string   `bson:"_id" json:"id"`
-	Oid    string   `bson:"oid" json:"oid"`
-	Owner  string   `bson:"owner" json:"owner"`
-	Pid    string   `bson:"pid" json:"pid"`
-	Name   string   `bson:"name" json:"name"`
-	Type   string   `bson:"type" json:"type"`     //type
-	Tags   []string `bson:"tags" json:"tags"`     //the tags
-	Subs   []string `bson:"subs" json:"subs"`     //the tags
-	Status string   `bson:"status" json:"status"` //file status
-	Time   int64    `bson:"time" json:"time"`     //create time.
 }
 
 var Indexes = map[string]map[string]mgo.Index{

@@ -115,7 +115,7 @@ func (f *FSH) Up(hs *routing.HTTPSession) routing.HResult {
 	if err != nil {
 		return hs.MsgResErr2(-2, "srv-err", err)
 	}
-	rf.Time, rf.Status = util.Now(), "N"
+	rf.Time, rf.Status = util.Now(), gfsdb.FS_N
 	if pub > 0 {
 		rf.Pub = util.ShortLink(rf.SHA + rf.MD5)
 	}
@@ -151,7 +151,7 @@ func (f *FSH) Up(hs *routing.HTTPSession) routing.HResult {
 	}
 	if recorded > 0 {
 		if len(folder) > 0 {
-			_, err = gfsdb.FindFolder(folder)
+			_, err = gfsdb.FindFile(folder)
 			if err != nil {
 				err = util.Err("FSH check folder exist by id(%v) error->%v", folder, err)
 				log.E("%v", err)
@@ -160,11 +160,11 @@ func (f *FSH) Up(hs *routing.HTTPSession) routing.HResult {
 		}
 		var file = &gfsdb.File{}
 		file.Fid, file.Name = rf.Id, rf.Name
-		file.Oid, file.Owner = hs.StrVal("uid"), "USR"
+		file.Oid, file.Owner, file.Type = hs.StrVal("uid"), OWN_USR, gfsdb.FT_FILE
 		if len(tags) > 0 {
 			file.Tags = strings.Split(tags, ",")
 		}
-		file.Desc, file.Folder = desc, folder
+		file.Desc, file.Pid = desc, folder
 		file.Time, file.Status = util.Now(), "N"
 		_, err = gfsdb.FOI_File(file)
 		if err != nil {

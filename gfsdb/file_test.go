@@ -1,14 +1,18 @@
 package gfsdb
 
 import (
+	"fmt"
 	"testing"
 )
 
 func TestFile(t *testing.T) {
 	var file = &File{
-		Fid:   "xxx",
-		Oid:   "1",
-		Owner: "USR",
+		Fid:    "xxx",
+		Oid:    "1",
+		Owner:  "USR",
+		Type:   FT_FILE,
+		Status: FS_N,
+		Tags:   []string{"f0"},
 	}
 	var updated, err = FOI_File(file)
 	if err != nil {
@@ -39,6 +43,132 @@ func TestFile(t *testing.T) {
 	}
 	_, err = FOI_File(&File{})
 	if err == nil {
+		t.Error("error")
+		return
+	}
+	_, err = FOI_File(&File{
+		Type: FT_FILE,
+	})
+	if err == nil {
+		t.Error("error")
+		return
+	}
+
+	//
+	file = &File{
+		Name:   "xkdd",
+		Oid:    "1",
+		Owner:  "USR",
+		Type:   FT_FOLDER,
+		Status: FS_N,
+	}
+	updated, err = FOI_File(file)
+	if err != nil {
+		t.Error(err.Error())
+		return
+	}
+	if updated < 1 {
+		t.Error("error")
+		return
+	}
+	updated, err = FOI_File(file)
+	if err != nil {
+		t.Error(err.Error())
+		return
+	}
+	if updated > 0 {
+		t.Error("error")
+		return
+	}
+	_, err = FOI_File(&File{
+		Type: FT_FOLDER,
+	})
+	if err == nil {
+		t.Error("error")
+		return
+	}
+	//
+	//test list file
+	var f = &File{
+		Fid:    "xxx2",
+		Oid:    "1",
+		Owner:  "USR",
+		Type:   FT_FILE,
+		Pid:    file.Id,
+		Status: FS_N,
+		Tags:   []string{"f1"},
+	}
+	updated, err = FOI_File(f)
+	if err != nil {
+		t.Error(err.Error())
+		return
+	}
+	if updated < 1 {
+		t.Error("error")
+		return
+	}
+	var file2 = &File{
+		Name:   "xkdd",
+		Oid:    "1",
+		Pid:    file.Id,
+		Owner:  "USR",
+		Type:   FT_FOLDER,
+		Status: FS_N,
+	}
+	updated, err = FOI_File(file2)
+	if err != nil {
+		t.Error(err.Error())
+		return
+	}
+	if updated < 1 {
+		t.Error("error")
+		return
+	}
+	var f2 = &File{
+		Fid:    "xd",
+		Oid:    "1",
+		Owner:  "USR",
+		Type:   FT_FILE,
+		Pid:    file2.Id,
+		Status: FS_N,
+		Tags:   []string{"f2"},
+	}
+	updated, err = FOI_File(f2)
+	if err != nil {
+		t.Error(err.Error())
+		return
+	}
+	if updated < 1 {
+		t.Error("error")
+		return
+	}
+	fs, err := ListFile("1", "USR", "", "", []string{""}, nil, []string{FS_N})
+	if err != nil {
+		t.Error(err.Error())
+		return
+	}
+	if len(fs) != 2 {
+		fmt.Println(fs)
+		t.Error("error")
+		return
+	}
+	fs, err = ListFile("1", "USR", "", FT_FILE, []string{""}, []string{"f0"}, []string{FS_N})
+	if err != nil {
+		t.Error(err.Error())
+		return
+	}
+	if len(fs) != 1 {
+		fmt.Println(fs)
+		t.Error("error")
+		return
+	}
+	fs, err = ListFile("1", "USR", "", "", []string{file2.Id}, nil, []string{FS_N})
+	if err != nil {
+		t.Error(err.Error())
+		return
+	}
+	if len(fs) != 1 {
+		fmt.Println(fs)
 		t.Error("error")
 		return
 	}
