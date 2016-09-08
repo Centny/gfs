@@ -87,7 +87,7 @@ import (
 //@tag,file,upload
 //@author,cny,2016-03-05
 //@case,File System
-//	User upload file
+//	User upload,delete,move file or folder.
 func (f *FSH) Up(hs *routing.HTTPSession) routing.HResult {
 	var (
 		pub, base64, recorded          int = 0, 0, 0
