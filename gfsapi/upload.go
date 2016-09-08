@@ -3,14 +3,15 @@ package gfsapi
 import (
 	"encoding/base64"
 	"fmt"
-	"github.com/Centny/gfs/gfsdb"
-	"github.com/Centny/gwf/log"
-	"github.com/Centny/gwf/routing"
-	"github.com/Centny/gwf/util"
 	"mime/multipart"
 	"os"
 	"path/filepath"
 	"strings"
+
+	"github.com/Centny/gfs/gfsdb"
+	"github.com/Centny/gwf/log"
+	"github.com/Centny/gwf/routing"
+	"github.com/Centny/gwf/util"
 )
 
 //File Upload
@@ -85,6 +86,8 @@ import (
 */
 //@tag,file,upload
 //@author,cny,2016-03-05
+//@case,File System
+//	User upload file
 func (f *FSH) Up(hs *routing.HTTPSession) routing.HResult {
 	var (
 		pub, base64, recorded          int = 0, 0, 0

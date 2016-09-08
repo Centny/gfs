@@ -2,15 +2,16 @@ package gfsapi
 
 import (
 	"fmt"
+	"os"
+	"path/filepath"
+	"strings"
+	"time"
+
 	"github.com/Centny/ffcm"
 	"github.com/Centny/gfs/gfsdb"
 	"github.com/Centny/gwf/log"
 	"github.com/Centny/gwf/routing"
 	"github.com/Centny/gwf/util"
-	"os"
-	"path/filepath"
-	"strings"
-	"time"
 )
 
 const (
@@ -193,6 +194,7 @@ func (f *FSH) AddSender(alias string, s FSedner) {
 */
 //@tag,file,info
 //@author,cny,2016-03-05
+//@case,File System
 func (f *FSH) Info(hs *routing.HTTPSession) routing.HResult {
 	var err error
 	var fid, sha, md5, mark, pub string

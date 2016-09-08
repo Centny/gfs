@@ -2,13 +2,14 @@ package gfsapi
 
 import (
 	"fmt"
+	"path/filepath"
+	"strings"
+
 	"github.com/Centny/gfs/gfsdb"
 	"github.com/Centny/gwf/log"
 	"github.com/Centny/gwf/routing"
 	"github.com/Centny/gwf/util"
 	tmgo "gopkg.in/mgo.v2"
-	"path/filepath"
-	"strings"
 )
 
 //File Download(Private)
@@ -29,6 +30,7 @@ import (
 //	not example.
 //@tag,file,download,private
 //@author,cny,2016-03-04
+//@case,File System
 func (f *FSH) Down(hs *routing.HTTPSession) routing.HResult {
 	var etype, mark, fid string
 	var dl, idx int = 0, 0
@@ -75,6 +77,7 @@ func (f *FSH) Down(hs *routing.HTTPSession) routing.HResult {
 //	not example.
 //@tag,file,download,public
 //@author,cny,2016-03-04
+//@case,File System
 func (f *FSH) Pub(hs *routing.HTTPSession) routing.HResult {
 	var path = strings.Trim(hs.R.URL.Path, "/ \t")
 	if len(path) < 1 {

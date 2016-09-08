@@ -76,6 +76,7 @@ import (
 */
 //@tag,file,info,list
 //@author,cny,2016-08-24
+//@case,File System
 func ListFile(hs *routing.HTTPSession) routing.HResult {
 	var name, typ string
 	var pid, tags []string
@@ -136,6 +137,7 @@ func ListFile(hs *routing.HTTPSession) routing.HResult {
 */
 //@tag,file,info,update
 //@author,cny,2016-08-24
+//@case,File System
 func UpdateFile(hs *routing.HTTPSession) routing.HResult {
 	var file = &gfsdb.File{}
 	var err = hs.ValidCheckVal(`
