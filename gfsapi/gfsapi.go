@@ -424,14 +424,3 @@ func SetMock(hs *routing.HTTPSession) routing.HResult {
 	}
 	return hs.MsgRes("OK")
 }
-
-func (f *FSH) Hand(pre string, mux *routing.SessionMux) {
-	mux.HFunc("^"+pre+"/pub/api/info(\\?.*)?", f.Info)
-	mux.HFunc("^"+pre+"/pub/api/listInfo(\\?.*)?", f.ListInfo)
-	mux.HFunc("^"+pre+"/usr/api/uload(\\?.*)?", f.Up)
-	mux.HFunc("^"+pre+"/usr/api/dload(\\?.*)?", f.Down)
-	mux.HFunc("^"+pre+"/usr/api/listFile(\\?.*)?", ListFile)
-	mux.HFunc("^"+pre+"/usr/api/updateFile(\\?.*)?", UpdateFile)
-	mux.HFunc("^"+pre+"/usr/test.html(\\?.*)?", TestHtml)
-	mux.HFunc("^"+pre+"/.*$", f.Pub)
-}

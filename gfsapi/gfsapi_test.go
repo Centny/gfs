@@ -3,6 +3,13 @@ package gfsapi
 import (
 	"bytes"
 	"fmt"
+	"os"
+	"runtime"
+	"strconv"
+	"strings"
+	"testing"
+	"time"
+
 	"github.com/Centny/dbm/mgo"
 	"github.com/Centny/ffcm"
 	"github.com/Centny/gfs/gfsdb"
@@ -13,12 +20,6 @@ import (
 	"github.com/Centny/gwf/util"
 	tmgo "gopkg.in/mgo.v2"
 	"gopkg.in/mgo.v2/bson"
-	"os"
-	"runtime"
-	"strconv"
-	"strings"
-	"testing"
-	"time"
 )
 
 func init() {
@@ -40,18 +41,18 @@ func TestUpDown(t *testing.T) {
 	os.RemoveAll("www")
 	os.RemoveAll("out")
 	os.RemoveAll("tmp")
-	var folder = &gfsdb.File{
-		Name:   "xx",
-		Oid:    "11",
-		Owner:  "USR",
-		Status: gfsdb.FS_N,
-		Type:   gfsdb.FT_FOLDER,
-	}
-	var _, err = gfsdb.FOI_File(folder)
-	if err != nil {
-		t.Error("error")
-		return
-	}
+	// var folder = &gfsdb.File{
+	// 	Name:   "xx",
+	// 	Oid:    "11",
+	// 	Owner:  "USR",
+	// 	Status: gfsdb.FS_N,
+	// 	Type:   gfsdb.FT_FOLDER,
+	// }
+	// var _, err = gfsdb.FOI_File(folder)
+	// if err != nil {
+	// 	t.Error("error")
+	// 	return
+	// }
 	ffcm.StartTest2("../gfs_s.properties", "../gfs_c.properties", gfsdb.NewFFCM_H())
 	time.Sleep(2 * time.Second)
 	if ffcm.SRV == nil {
@@ -59,7 +60,7 @@ func TestUpDown(t *testing.T) {
 		return
 	}
 	var fcfg = util.NewFcfg3()
-	err = fcfg.InitWithFilePath2("../gfs_s.properties", false)
+	var err = fcfg.InitWithFilePath2("../gfs_s.properties", false)
 	if err != nil {
 		t.Error(err.Error())
 		return
@@ -81,8 +82,26 @@ func TestUpDown(t *testing.T) {
 		return ts.URL
 	}
 	//
+	//test adding folder
+	folder, err := DoAddFolder("", "xx", "ssss", nil)
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	fmt.Println(util.S2Json(folder))
+	folderID := folder.StrValP("/folder/id")
+	parent, err := DoAddFolder(folderID, "xx", "ssss", nil)
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	if parent.StrValP("/folder/pid") != folderID {
+		t.Error("error")
+		return
+	}
+	//
 	//test upload file
-	res, err := DoUpF("../../ffcm/xx.mp4", "", "xxa", "x,y,z", folder.Id, "desc", 1, 1)
+	res, err := DoUpF("../../ffcm/xx.mp4", "", "xxa", "x,y,z", folderID, "desc", 1, 1)
 	if err != nil {
 		t.Error(err.Error())
 		return
@@ -315,7 +334,7 @@ func TestUpDown(t *testing.T) {
 	// }
 
 	//upload same file
-	res_2, err := DoUpF("../../ffcm/xx.mp4", "", "xxa", "x,y,z", folder.Id, "desc", 1, 1)
+	res_2, err := DoUpF("../../ffcm/xx.mp4", "", "xxa", "x,y,z", folderID, "desc", 1, 1)
 	if err != nil {
 		t.Error(err.Error())
 		return
@@ -483,7 +502,7 @@ func TestUpDown(t *testing.T) {
 	}
 	//
 	//upload fail with mark exist
-	_, err = DoUpF("run_ff.sh", "", "xxa", "x,y,z", folder.Id, "desc", 1, 1)
+	_, err = DoUpF("run_ff.sh", "", "xxa", "x,y,z", folderID, "desc", 1, 1)
 	if err == nil {
 		t.Error("error")
 		return
@@ -659,7 +678,7 @@ func TestUpDown(t *testing.T) {
 	tmgo.Mock = true
 	//
 	tmgo.SetMckC("Query-Apply", 0)
-	_, err = DoUpF("../../ffcm/xx.mp4", "xx.mp4", "xxa", "x,y,z", folder.Id, "desc", 1, 1)
+	_, err = DoUpF("../../ffcm/xx.mp4", "xx.mp4", "xxa", "x,y,z", folderID, "desc", 1, 1)
 	if err == nil {
 		t.Error("error")
 		return
@@ -675,7 +694,7 @@ func TestUpDown(t *testing.T) {
 	tmgo.ClearMock()
 	//
 	tmgo.SetMckC("Query-Apply", 1)
-	_, err = DoUpF("../../ffcm/xx.mp4", "xx.mp4", "xxa", "x,y,z", folder.Id, "desc", 1, 1)
+	_, err = DoUpF("../../ffcm/xx.mp4", "xx.mp4", "xxa", "x,y,z", folderID, "desc", 1, 1)
 	if err == nil {
 		t.Error("error")
 		return
@@ -683,7 +702,7 @@ func TestUpDown(t *testing.T) {
 	tmgo.ClearMock()
 	//
 	tmgo.SetMckC("Query-One", 0)
-	_, err = DoUpF("../../ffcm/xx.mp4", "xx.mp4", "xxa", "x,y,z", folder.Id, "desc", 1, 1)
+	_, err = DoUpF("../../ffcm/xx.mp4", "xx.mp4", "xxa", "x,y,z", folderID, "desc", 1, 1)
 	if err == nil {
 		t.Error("error")
 		return
@@ -691,7 +710,7 @@ func TestUpDown(t *testing.T) {
 	tmgo.ClearMock()
 	//
 	tmgo.SetMckC("Query-Apply", 2)
-	_, err = DoUpF("../../ffcm/xx.mp4", "xx.mp4", "xxa", "x,y,z", folder.Id, "desc", 1, 1)
+	_, err = DoUpF("../../ffcm/xx.mp4", "xx.mp4", "xxa", "x,y,z", folderID, "desc", 1, 1)
 	if err == nil {
 		t.Error("error")
 		return

@@ -4,10 +4,11 @@ import (
 	"bytes"
 	"encoding/base64"
 	"fmt"
-	"github.com/Centny/gwf/log"
-	"github.com/Centny/gwf/util"
 	"io/ioutil"
 	"strings"
+
+	"github.com/Centny/gwf/log"
+	"github.com/Centny/gwf/util"
 )
 
 var SrvAddr = func() string {
@@ -153,4 +154,17 @@ func DoUpdateFile(fid, name, desc string, tags []string) error {
 	} else {
 		return util.Err("list file error->%v", util.S2Json(res))
 	}
+}
+
+func DoAddFolder(pid, name, desc string, tags []string) (util.Map, error) {
+	var res, err = util.HGet2(
+		"%v/usr/api/addFolder?pid=%v&name=%v&desc=%v&tags=%v&%v",
+		SrvAddr(), pid, name, strings.Join(tags, ","), SrvArgs())
+	if err != nil {
+		return nil, err
+	}
+	if res.Exist("code") && res.IntVal("code") == 0 {
+		return res.MapVal("data"), nil
+	}
+	return nil, util.Err("add folder error->%v", util.S2Json(res))
 }

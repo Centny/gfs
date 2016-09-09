@@ -41,7 +41,7 @@ func FOI_File(file *File) (int, error) {
 		Upsert:    true,
 		ReturnNew: true,
 	}, file)
-	var updated int = 0
+	var updated = 0
 	if err == nil && res.UpsertedId != nil {
 		updated = 1
 	}
@@ -58,6 +58,9 @@ func UpdateFile(file *File) error {
 	}
 	if len(file.Desc) > 0 {
 		update["desc"] = file.Desc
+	}
+	if len(file.Pid) > 0 {
+		update["pid"] = file.Pid
 	}
 	update["time"] = util.Now()
 	return C(CN_FILE).Update(bson.M{"_id": file.Id}, update)
