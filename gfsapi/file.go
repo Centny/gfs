@@ -87,14 +87,14 @@ func ListFile(hs *routing.HTTPSession) routing.HResult {
 		type,O|S,O:file~folder;
 		pid,O|S,L:0;
 		tags,O|S,L:0;
-		pn,O|I,R:-1;
+		pn,O|I,R:0;
 		ps,O|I,R:0;
 		`, &name, &typ, &pid, &tags, &pn, &ps)
 	if err != nil {
 		return hs.MsgResErr2(1, "arg-err", err)
 	}
 	var uid = hs.StrVal("uid")
-	fs, err := gfsdb.ListFilePaged(uid, OWN_USR, name, typ, pid, tags, []string{gfsdb.FS_N}, pn, ps)
+	fs, err := gfsdb.ListFilePaged(uid, OWN_USR, name, typ, pid, tags, []string{gfsdb.FS_N}, pn-1, ps)
 	if err != nil {
 		err = util.Err("ListFile list find by oid(%v),owner(%v),name(%v),type(%v),pid(%v),tags(%v) fail with error(%v)",
 			uid, OWN_USR, name, typ, pid, tags, err)
