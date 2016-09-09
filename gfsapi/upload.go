@@ -28,13 +28,14 @@ import (
 //@url,http post
 //	~/usr/api/uload		POST	multipart/form-data
 //@arg,the normal query arguments, at least one arguments is setted on fid/mark/sha/md5
-//	pub		O	whether create public path
-//	base64	O	using bas64 upload mode, default is 0.
-//	name	O	specie the file name.
-//	mark	O	add mark to file.
-//	tags	O	add tag to file, split by comma
-//	desc	O	the file description.
-//	folder	O	special the folder where the fill will be stored.
+//	pub			O	whether create public path
+//	base64		O	using bas64 upload mode, default is 0.
+//	name		O	specie the file name.
+//	mark		O	add mark to file.
+//	tags		O	add tag to file, split by comma
+//	desc		O	the file description.
+//	folder		O	special the folder where the fill will be stored.
+//	recorded	O	whether record file to user file list or not, 1 is recorded, default 0
 //	~/usr/api/uload?pub=1&name=xxx.mp4&mark=xxa
 //@ret,code/data return
 //	base			O	the file base information, see the /pub/api/info for the detail.
