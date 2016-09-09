@@ -77,6 +77,10 @@ func FindFile(id string) (*File, error) {
 }
 
 func ListFile(oid, owner, name, typ string, pid, tags, status []string) ([]*File, error) {
+	return ListFilePaged(oid, owner, name, typ, pid, tags, status, 0, 0)
+}
+
+func ListFilePaged(oid, owner, name, typ string, pid, tags, status []string, pn, ps int) ([]*File, error) {
 	var query = bson.M{}
 	if len(pid) > 0 {
 		query["pid"] = bson.M{
@@ -110,9 +114,16 @@ func ListFile(oid, owner, name, typ string, pid, tags, status []string) ([]*File
 			"$in": status,
 		}
 	}
+	var Q = C(CN_FILE).Find(query)
+	if pn > 0 {
+		Q = Q.Skip(pn * ps)
+	}
+	if ps > 0 {
+		Q = Q.Limit(ps)
+	}
 	// fmt.Println(util.S2Json(query))
 	var fs = []*File{}
-	var err = C(CN_FILE).Find(query).All(&fs)
+	var err = Q.All(&fs)
 	return fs, err
 
 }

@@ -318,7 +318,7 @@ func TestUpDown(t *testing.T) {
 	// 	t.Error(err)
 	// 	return
 	// }
-	res, err = DoListFile("", "", nil, nil)
+	res, err = DoListFile("", "", nil, nil, 0, 100)
 	if err != nil {
 		t.Error(err.Error())
 		return

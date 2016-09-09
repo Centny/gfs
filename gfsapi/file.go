@@ -14,10 +14,11 @@ import (
 //	~/usr/api/listFile		GET
 //@arg,the normal query arguments
 //	name	O	the search key for file name
-//	type	O	the type in file/folder to show the file or folder
+//	type	O	the type in `file/folder` to show the file or folder
 //	pid		O	the parent folder id
 //	tags	O	the file/folder tags to filter
 /*
+	//
 	//list user file or folder
 	~/usr/api/listFile
 	//list user file
@@ -80,17 +81,20 @@ import (
 func ListFile(hs *routing.HTTPSession) routing.HResult {
 	var name, typ string
 	var pid, tags []string
+	var pn, ps = 1, 20
 	var err = hs.ValidCheckVal(`
 		name,O|S,L:0;
 		type,O|S,O:file~folder;
 		pid,O|S,L:0;
 		tags,O|S,L:0;
-		`, &name, &typ, &pid, &tags)
+		pn,O|I,R:-1;
+		ps,O|I,R:0;
+		`, &name, &typ, &pid, &tags, &pn, &ps)
 	if err != nil {
 		return hs.MsgResErr2(1, "arg-err", err)
 	}
 	var uid = hs.StrVal("uid")
-	fs, err := gfsdb.ListFile(uid, OWN_USR, name, typ, pid, tags, []string{gfsdb.FS_N})
+	fs, err := gfsdb.ListFilePaged(uid, OWN_USR, name, typ, pid, tags, []string{gfsdb.FS_N}, pn, ps)
 	if err != nil {
 		err = util.Err("ListFile list find by oid(%v),owner(%v),name(%v),type(%v),pid(%v),tags(%v) fail with error(%v)",
 			uid, OWN_USR, name, typ, pid, tags, err)
