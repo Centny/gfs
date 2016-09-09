@@ -225,7 +225,8 @@ func AddFolder(hs *routing.HTTPSession) routing.HResult {
 			return hs.MsgResErr2(404, "srv-err", util.Err("the parent folder is not found or not yours"))
 		}
 	}
-	file.Oid, file.Owner, file.Type, file.Status = hs.StrVal("uid"), OWN_USR, gfsdb.FT_FOLDER, gfsdb.FS_N
+	file.Oid, file.Owner, file.Type = hs.StrVal("uid"), OWN_USR, gfsdb.FT_FOLDER
+	file.Status, file.Time = gfsdb.FS_N, util.Now()
 	updated, err := gfsdb.FOI_File(file)
 	if err != nil {
 		log.E("AddFolder find file by id(%v) fail with error(%v)", file.Pid, err)
