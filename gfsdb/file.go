@@ -1,6 +1,7 @@
 package gfsdb
 
 import (
+	"github.com/Centny/gwf/log"
 	"github.com/Centny/gwf/util"
 	tmgo "gopkg.in/mgo.v2"
 	"gopkg.in/mgo.v2/bson"
@@ -17,6 +18,7 @@ func FOI_File(file *File) (int, error) {
 			return 0, util.Err("the fid/oid/owner must be setted")
 		}
 		query = bson.M{
+			"pid":   file.Pid,
 			"fid":   file.Fid,
 			"oid":   file.Oid,
 			"owner": file.Owner,
@@ -63,7 +65,11 @@ func UpdateFile(file *File) error {
 		update["pid"] = file.Pid
 	}
 	update["time"] = util.Now()
-	return C(CN_FILE).Update(bson.M{"_id": file.Id}, update)
+	return C(CN_FILE).Update(bson.M{"_id": file.Id}, bson.M{"$set": update})
+}
+
+func RemoveFile(id string) error {
+	return C(CN_FILE).Remove(bson.M{"_id": id})
 }
 
 func CountFile() (int, error) {
@@ -124,6 +130,11 @@ func ListFilePaged(oid, owner, name, typ string, pid, tags, status []string, pn,
 	// fmt.Println(util.S2Json(query))
 	var fs = []*File{}
 	var err = Q.All(&fs)
+	if err != nil {
+		log.E("ListFilePaged list file fail with error(%v), the query is:\n%v", err, util.S2Json(query))
+	} else if ShowLog > 0 {
+		log.D("ListFilePaged list file succes with %v found, the query is:\n%v", len(fs), util.S2Json(query))
+	}
 	return fs, err
 
 }

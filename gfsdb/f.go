@@ -1,14 +1,15 @@
 package gfsdb
 
 import (
+	"path/filepath"
+	"reflect"
+
 	"github.com/Centny/ffcm"
 	"github.com/Centny/gwf/log"
 	"github.com/Centny/gwf/netw/dtm"
 	"github.com/Centny/gwf/util"
 	tmgo "gopkg.in/mgo.v2"
 	"gopkg.in/mgo.v2/bson"
-	"path/filepath"
-	"reflect"
 )
 
 var MockStartTaskErr int = 0
@@ -91,7 +92,7 @@ func FOI_F(rf *F) (int, error) {
 		}
 	}
 	go do_add_task(rf)
-	return res.Updated, nil
+	return 1, nil
 }
 
 func do_remove(id string) error {

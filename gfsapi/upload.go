@@ -170,13 +170,14 @@ func (f *FSH) Up(hs *routing.HTTPSession) routing.HResult {
 		}
 		file.Desc, file.Pid = desc, folder
 		file.Time, file.Status = util.Now(), "N"
-		_, err = gfsdb.FOI_File(file)
+		fileAdded, err := gfsdb.FOI_File(file)
 		if err != nil {
 			err = util.Err("FSH find or insert user file by (%v) error->%v", util.S2Json(file), err)
 			log.E("%v", err)
 			return hs.MsgResErr2(-7, "srv-err", err)
 		}
 		args["file"] = file
+		args["file_added"] = fileAdded
 	}
 	log.D("FSH add file pub(%v),base64(%v),name(%v),mark(%v),tags(%v),folder(%v) success",
 		pub, base64, name, mark, tags, folder)

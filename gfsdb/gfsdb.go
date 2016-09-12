@@ -1,9 +1,10 @@
 package gfsdb
 
 import (
-	"gopkg.in/mgo.v2"
 	"path/filepath"
 	"strings"
+
+	"gopkg.in/mgo.v2"
 )
 
 const (
@@ -13,6 +14,7 @@ const (
 	CN_FOLDER = "c_folder"
 )
 
+var ShowLog = 0
 var OutPathPre = ""
 var CreateOutPath = func(f *F) string {
 	if len(f.Path) < 1 {

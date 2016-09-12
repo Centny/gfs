@@ -145,15 +145,27 @@ func DoListFile(name, typ string, pid, tags []string, pn, ps int) (util.Map, err
 func DoUpdateFile(fid, name, desc string, tags []string) error {
 	var res, err = util.HGet2(
 		"%v/usr/api/updateFile?fid=%v&name=%v&desc=%v&tags=%v&%v",
-		SrvAddr(), fid, name, strings.Join(tags, ","), SrvArgs())
+		SrvAddr(), fid, name, desc, strings.Join(tags, ","), SrvArgs())
 	if err != nil {
 		return err
 	}
 	if res.IntVal("code") == 0 {
 		return nil
-	} else {
-		return util.Err("list file error->%v", util.S2Json(res))
 	}
+	return util.Err("list file error->%v", util.S2Json(res))
+}
+
+func DoRemoveFile(fid string) error {
+	var res, err = util.HGet2(
+		"%v/usr/api/removeFile?fid=%v&%v",
+		SrvAddr(), fid, SrvArgs())
+	if err != nil {
+		return err
+	}
+	if res.Exist("code") && res.IntVal("code") == 0 {
+		return nil
+	}
+	return util.Err("remove file error->%v", util.S2Json(res))
 }
 
 func DoAddFolder(pid, name, desc string, tags []string) (util.Map, error) {

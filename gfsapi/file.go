@@ -94,6 +94,9 @@ func ListFile(hs *routing.HTTPSession) routing.HResult {
 		return hs.MsgResErr2(1, "arg-err", err)
 	}
 	var uid = hs.StrVal("uid")
+	if len(pid) < 1 {
+		pid = []string{""}
+	}
 	fs, err := gfsdb.ListFilePaged(uid, OWN_USR, name, typ, pid, tags, []string{gfsdb.FS_N}, pn-1, ps)
 	if err != nil {
 		err = util.Err("ListFile list find by oid(%v),owner(%v),name(%v),type(%v),pid(%v),tags(%v) fail with error(%v)",
@@ -146,10 +149,11 @@ func UpdateFile(hs *routing.HTTPSession) routing.HResult {
 	var file = &gfsdb.File{}
 	var err = hs.ValidCheckVal(`
 		fid,R|S,L:0;
+		pid,O|S,L:0;
 		name,O|S,L:0;
 		desc,O|S,L:0;
 		tags,O|S,L:0;
-		`, &file.Id, &file.Name, &file.Desc, &file.Tags)
+		`, &file.Id, &file.Pid, &file.Name, &file.Desc, &file.Tags)
 	if err != nil {
 		return hs.MsgResErr2(1, "arg-err", err)
 	}
@@ -157,6 +161,41 @@ func UpdateFile(hs *routing.HTTPSession) routing.HResult {
 	file.Owner = OWN_USR
 	err = gfsdb.UpdateFile(file)
 	if err != nil {
+		return hs.MsgResErr2(2, "srv-err", err)
+	}
+	return hs.MsgRes("OK")
+}
+
+//RemoveFile remove user file or folder
+//Remove user file or foild by id
+//
+//@url,normal http get request
+//	~/usr/api/removeFile?fid=xx		GET
+//@arg,the normal query arguments
+//	fid		R	the file/folder id
+/*
+	//remove file/folder
+	~/usr/api/removeFile?fid=<file id or folder id>
+*/
+//@ret,code/data return
+//	code	I	the common code.
+/*	the example
+	{
+	    "code": 0,
+	    "data": "OK"
+	}
+*/
+//@tag,file,remove
+//@author,cny,2016-09-09
+//@case,File System
+func RemoveFile(hs *routing.HTTPSession) routing.HResult {
+	var fid = hs.CheckVal("fid")
+	if len(fid) < 1 {
+		return hs.MsgResE3(1, "arg-err", "fid argument not found")
+	}
+	var err = gfsdb.RemoveFile(fid)
+	if err != nil {
+		log.E("RemoveFile remove file by id(%v) fail with error(%v)", fid, err)
 		return hs.MsgResErr2(2, "srv-err", err)
 	}
 	return hs.MsgRes("OK")

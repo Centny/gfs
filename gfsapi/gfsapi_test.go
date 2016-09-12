@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"os"
 	"runtime"
-	"strconv"
 	"strings"
 	"testing"
 	"time"
@@ -22,10 +21,18 @@ import (
 	"gopkg.in/mgo.v2/bson"
 )
 
-func init() {
+var tsh *FSH
+var uid = "123"
+var turl = ""
+
+func clearDb() {
 	mgo.C(gfsdb.CN_FOLDER).RemoveAll(nil)
 	mgo.C(gfsdb.CN_F).RemoveAll(nil)
+	mgo.C(gfsdb.CN_FILE).RemoveAll(nil)
 	mgo.C(gfsdb.CN_MARK).RemoveAll(nil)
+}
+func init() {
+	clearDb()
 	func() {
 		defer func() {
 			recover()
@@ -33,6 +40,34 @@ func init() {
 		SrvAddr()
 	}()
 	gfsdb.C = mgo.C
+	//
+	ffcm.StartTest2("../gfs_s.properties", "../gfs_c.properties", gfsdb.NewFFCM_H())
+	time.Sleep(2 * time.Second)
+	if ffcm.SRV == nil {
+		panic("initial error")
+	}
+	var fcfg = util.NewFcfg3()
+	var err = fcfg.InitWithFilePath2("../gfs_s.properties", false)
+	if err != nil {
+		panic(err)
+	}
+	var ts = httptest.NewMuxServer()
+	tsh, err = NewFSH2(fcfg)
+	if err != nil {
+		panic(err)
+	}
+	ts.Mux.HFilterFunc("^/usr/api/uload(\\?.*)?$", filter.ParseQuery)
+	ts.Mux.HFilterFunc("^.*$", func(hs *routing.HTTPSession) routing.HResult {
+		hs.SetVal("uid", uid)
+		return routing.HRES_CONTINUE
+	})
+	tsh.Hand("", ts.Mux)
+	tsh.Host = ts.URL
+	SrvAddr = func() string {
+		return ts.URL
+	}
+	turl = ts.URL
+	gfsdb.ShowLog = 1
 }
 
 func TestUpDown(t *testing.T) {
@@ -41,6 +76,7 @@ func TestUpDown(t *testing.T) {
 	os.RemoveAll("www")
 	os.RemoveAll("out")
 	os.RemoveAll("tmp")
+	uid = "123"
 	// var folder = &gfsdb.File{
 	// 	Name:   "xx",
 	// 	Oid:    "11",
@@ -53,34 +89,6 @@ func TestUpDown(t *testing.T) {
 	// 	t.Error("error")
 	// 	return
 	// }
-	ffcm.StartTest2("../gfs_s.properties", "../gfs_c.properties", gfsdb.NewFFCM_H())
-	time.Sleep(2 * time.Second)
-	if ffcm.SRV == nil {
-		t.Error("initial error")
-		return
-	}
-	var fcfg = util.NewFcfg3()
-	var err = fcfg.InitWithFilePath2("../gfs_s.properties", false)
-	if err != nil {
-		t.Error(err.Error())
-		return
-	}
-	var ts = httptest.NewMuxServer()
-	tsh, err := NewFSH2(fcfg)
-	if err != nil {
-		t.Error(err.Error())
-		return
-	}
-	ts.Mux.HFilterFunc("^/usr/api/uload(\\?.*)?$", filter.ParseQuery)
-	ts.Mux.HFilterFunc("^.*$", func(hs *routing.HTTPSession) routing.HResult {
-		hs.SetVal("uid", "123")
-		return routing.HRES_CONTINUE
-	})
-	tsh.Hand("", ts.Mux)
-	tsh.Host = ts.URL
-	SrvAddr = func() string {
-		return ts.URL
-	}
 	//
 	//test adding folder
 	folder, err := DoAddFolder("", "xx", "ssss", nil)
@@ -90,15 +98,6 @@ func TestUpDown(t *testing.T) {
 	}
 	fmt.Println(util.S2Json(folder))
 	folderID := folder.StrValP("/folder/id")
-	parent, err := DoAddFolder(folderID, "xx", "ssss", nil)
-	if err != nil {
-		t.Error(err)
-		return
-	}
-	if parent.StrValP("/folder/pid") != folderID {
-		t.Error("error")
-		return
-	}
 	//
 	//test upload file
 	res, err := DoUpF("../../ffcm/xx.mp4", "", "xxa", "x,y,z", folderID, "desc", 1, 1)
@@ -113,7 +112,6 @@ func TestUpDown(t *testing.T) {
 	var md5 = res.StrValP("/base/md5")
 	var pub = res.StrValP("/base/pub")
 	var url = res.StrValP("/url")
-	var file_id = res.StrValP("/file/id")
 	// fmt.Println(util.S2Json(res))
 	var tf, _ = gfsdb.FindF(fid)
 	var path = tf.Path
@@ -312,26 +310,6 @@ func TestUpDown(t *testing.T) {
 		return
 	}
 	//
-	//test list file
-	// err = DoUpdateFile(file_id, "xxx", "", nil)
-	// if err != nil {
-	// 	t.Error(err)
-	// 	return
-	// }
-	res, err = DoListFile("", "", nil, nil, 0, 100)
-	if err != nil {
-		t.Error(err.Error())
-		return
-	}
-	if len(res.AryMapVal("files")) < 1 || len(res.MapVal("bases")) < 1 {
-		fmt.Println(util.S2Json(res))
-		fmt.Println(file_id)
-		t.Error("error")
-		return
-	}
-	// if true {
-	// 	return
-	// }
 
 	//upload same file
 	res_2, err := DoUpF("../../ffcm/xx.mp4", "", "xxa", "x,y,z", folderID, "desc", 1, 1)
@@ -753,6 +731,9 @@ func TestUpDown(t *testing.T) {
 	DoUpBase64("nil", "ctype", "name", "mark", "tags", "folder", "desc", 1, 1)
 	DoUpF("file", "name", "mark", "tags", "folder", "desc", 1, 1)
 	FilterTaskInfo([]*gfsdb.F{&gfsdb.F{}})
+	SrvAddr = func() string {
+		return turl
+	}
 	//
 	fmt.Println("test done...")
 }
@@ -824,7 +805,206 @@ sender=dekk
 	}
 }
 
-func TestXX(t *testing.T) {
-	fmt.Println(strconv.ParseUint("0777", 8, 32))
-	fmt.Println(uint32(os.ModePerm))
+func TestFile(t *testing.T) {
+	clearDb()
+	fmt.Println(gfsdb.CountF())
+	uid = "test_file"
+	//
+	//test add folder
+	folder, err := DoAddFolder("", "xx", "ssss", nil)
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	if folder.IntVal("added") != 1 || folder.StrValP("/folder/status") != gfsdb.FS_N {
+		t.Error("error")
+		return
+	}
+	folderID := folder.StrValP("/folder/id")
+	res, err := DoListFile("", gfsdb.FT_FOLDER, nil, nil, 1, 100)
+	if err != nil {
+		t.Error(err.Error())
+		return
+	}
+	if len(res.AryMapVal("files")) != 1 || len(res.MapVal("bases")) > 0 || res.StrValP("/files/0/id") != folderID {
+		fmt.Println(util.S2Json(res))
+		t.Error("error")
+		return
+	}
+	//
+	//test update folder
+	err = DoUpdateFile(folder.StrValP("/folder/id"), "abc", "desc2", []string{"x1", "x2"})
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	res, err = DoListFile("", gfsdb.FT_FOLDER, nil, nil, 1, 100)
+	if err != nil {
+		t.Error(err.Error())
+		return
+	}
+	if len(res.AryMapVal("files")) != 1 || len(res.MapVal("bases")) > 0 ||
+		res.StrValP("/files/0/id") != folderID ||
+		res.StrValP("/files/0/name") != "abc" ||
+		res.StrValP("/files/0/desc") != "desc2" ||
+		res.StrValP("/files/0/tags/0") != "x1" ||
+		res.StrValP("/files/0/tags/1") != "x2" {
+		fmt.Println(util.S2Json(res))
+		t.Error("error")
+		return
+	}
+	//
+	//test remove file
+	err = DoRemoveFile(folderID)
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	res, err = DoListFile("", gfsdb.FT_FOLDER, nil, nil, 1, 100)
+	if err != nil {
+		t.Error(err.Error())
+		return
+	}
+	if len(res.AryMapVal("files")) != 0 || len(res.MapVal("bases")) > 0 {
+		fmt.Println(util.S2Json(res))
+		t.Error("error")
+		return
+	}
+	//
+	//test add sub folder which parent removed
+	sub, err := DoAddFolder(folderID, "xx", "ssss", nil)
+	if err == nil {
+		t.Error("error")
+		return
+	}
+	//
+	//test add folder again
+	folder, err = DoAddFolder("", "xx", "ssss", nil)
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	if folder.IntVal("added") != 1 || folder.StrValP("/folder/status") != gfsdb.FS_N {
+		t.Error("error")
+		return
+	}
+	folderID = folder.StrValP("/folder/id")
+	//
+	//test add sub folder
+	sub, err = DoAddFolder(folderID, "xx", "ssss", nil)
+	if err != nil {
+		t.Error("error")
+		return
+	}
+	if sub.StrValP("/folder/pid") != folderID {
+		t.Error("error")
+		return
+	}
+	subFolderID := sub.StrValP("/folder/id")
+	res, err = DoListFile("", gfsdb.FT_FOLDER, []string{folderID}, nil, 1, 100)
+	if err != nil {
+		t.Error(err.Error())
+		return
+	}
+	if len(res.AryMapVal("files")) != 1 || len(res.MapVal("bases")) > 0 {
+		fmt.Println(util.S2Json(res))
+		t.Error("error")
+		return
+	}
+	//
+	//test upload file to root folder
+	file, err := DoUpF("file.go", "", "xxa", "x,y,z", "", "desc", 1, 1)
+	if err != nil {
+		t.Error(err.Error())
+		return
+	}
+	if file.IntValP("/added") != 1 || file.IntValP("/file_added") != 1 {
+		fmt.Println(util.S2Json(file))
+		t.Error("error")
+		return
+	}
+	var fid = file.StrValP("/file/id")
+	if len(fid) < 1 {
+		fmt.Println(util.S2Json(file))
+		t.Error("error")
+		return
+	}
+	res, err = DoListFile("", gfsdb.FT_FOLDER, nil, nil, 1, 100) //check folder
+	if err != nil {
+		t.Error(err.Error())
+		return
+	}
+	if len(res.AryMapVal("files")) != 1 || len(res.MapVal("bases")) > 0 || res.StrValP("/files/0/id") != folderID {
+		fmt.Println(util.S2Json(res))
+		t.Error("error")
+		return
+	}
+	res, err = DoListFile("", gfsdb.FT_FILE, nil, nil, 1, 100) //check file
+	if err != nil {
+		t.Error(err.Error())
+		return
+	}
+	if len(res.AryMapVal("files")) != 1 || len(res.MapVal("bases")) != 1 || res.StrValP("/files/0/id") != fid {
+		fmt.Println(util.S2Json(res))
+		t.Error("error")
+		return
+	}
+	res, err = DoListFile("", "", nil, nil, 1, 100) //check all
+	if err != nil {
+		t.Error(err.Error())
+		return
+	}
+	if len(res.AryMapVal("files")) != 2 || len(res.MapVal("bases")) != 1 {
+		fmt.Println(util.S2Json(res))
+		t.Error("error")
+		return
+	}
+	//
+	//test upload file to sub folder
+	file, err = DoUpF("file.go", "", "", "x,y,z", folderID, "desc", 1, 1)
+	if err != nil {
+		t.Error(err.Error())
+		return
+	}
+	if file.IntValP("/file_added") != 1 {
+		fmt.Println(util.S2Json(file))
+		t.Error("error")
+		return
+	}
+	fid = file.StrValP("/file/id")
+	if len(fid) < 1 {
+		fmt.Println(util.S2Json(file))
+		t.Error("error")
+		return
+	}
+	res, err = DoListFile("", gfsdb.FT_FOLDER, []string{folderID}, nil, 1, 100) //check folder
+	if err != nil {
+		t.Error(err.Error())
+		return
+	}
+	if len(res.AryMapVal("files")) != 1 || len(res.MapVal("bases")) > 0 || res.StrValP("/files/0/id") != subFolderID {
+		fmt.Println(util.S2Json(res))
+		t.Error("error")
+		return
+	}
+	res, err = DoListFile("", gfsdb.FT_FILE, []string{folderID}, nil, 1, 100) //check file
+	if err != nil {
+		t.Error(err.Error())
+		return
+	}
+	if len(res.AryMapVal("files")) != 1 || len(res.MapVal("bases")) != 1 || res.StrValP("/files/0/id") != fid {
+		fmt.Println(util.S2Json(res))
+		t.Error("error")
+		return
+	}
+	res, err = DoListFile("", "", []string{folderID}, nil, 1, 100) //check all
+	if err != nil {
+		t.Error(err.Error())
+		return
+	}
+	if len(res.AryMapVal("files")) != 2 || len(res.MapVal("bases")) != 1 {
+		fmt.Println(util.S2Json(res))
+		t.Error("error")
+		return
+	}
 }

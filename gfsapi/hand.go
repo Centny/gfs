@@ -9,6 +9,7 @@ func (f *FSH) Hand(pre string, mux *routing.SessionMux) {
 	mux.HFunc("^"+pre+"/usr/api/dload(\\?.*)?", f.Down)
 	mux.HFunc("^"+pre+"/usr/api/listFile(\\?.*)?", ListFile)
 	mux.HFunc("^"+pre+"/usr/api/updateFile(\\?.*)?", UpdateFile)
+	mux.HFunc("^"+pre+"/usr/api/removeFile(\\?.*)?", RemoveFile)
 	mux.HFunc("^"+pre+"/usr/api/addFolder(\\?.*)?", AddFolder)
 	mux.HFunc("^"+pre+"/usr/test.html(\\?.*)?", TestHtml)
 	mux.HFunc("^"+pre+"/.*$", f.Pub)
