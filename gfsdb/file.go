@@ -83,10 +83,11 @@ func FindFile(id string) (*File, error) {
 }
 
 func ListFile(oid, owner, name, typ string, pid, tags, status []string) ([]*File, error) {
-	return ListFilePaged(oid, owner, name, typ, pid, tags, status, 0, 0)
+	var fs, _, err = ListFilePaged(oid, owner, name, typ, pid, tags, status, 0, 0, 0)
+	return fs, err
 }
 
-func ListFilePaged(oid, owner, name, typ string, pid, tags, status []string, pn, ps int) ([]*File, error) {
+func ListFilePaged(oid, owner, name, typ string, pid, tags, status []string, pn, ps, retTotal int) (fs []*File, total int, err error) {
 	var query = bson.M{}
 	if len(pid) > 0 {
 		query["pid"] = bson.M{
@@ -128,13 +129,14 @@ func ListFilePaged(oid, owner, name, typ string, pid, tags, status []string, pn,
 		Q = Q.Limit(ps)
 	}
 	// fmt.Println(util.S2Json(query))
-	var fs = []*File{}
-	var err = Q.All(&fs)
+	err = Q.All(&fs)
 	if err != nil {
 		log.E("ListFilePaged list file fail with error(%v), the query is:\n%v", err, util.S2Json(query))
+		return fs, 0, err
 	} else if ShowLog > 0 {
 		log.D("ListFilePaged list file succes with %v found, the query is:\n%v", len(fs), util.S2Json(query))
 	}
-	return fs, err
+	total, err = C(CN_FILE).Find(query).Count()
+	return fs, total, err
 
 }

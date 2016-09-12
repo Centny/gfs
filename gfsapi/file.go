@@ -17,6 +17,8 @@ import (
 //	type	O	the type in `file/folder` to show the file or folder
 //	pid		O	the parent folder id
 //	tags	O	the file/folder tags to filter
+//	pn		O	the page number begin of 1, default is 1
+//	ps		O	the page size, default is 20
 /*
 	//
 	//list user file or folder
@@ -97,7 +99,7 @@ func ListFile(hs *routing.HTTPSession) routing.HResult {
 	if len(pid) < 1 {
 		pid = []string{""}
 	}
-	fs, err := gfsdb.ListFilePaged(uid, OWN_USR, name, typ, pid, tags, []string{gfsdb.FS_N}, pn-1, ps)
+	fs, total, err := gfsdb.ListFilePaged(uid, OWN_USR, name, typ, pid, tags, []string{gfsdb.FS_N}, pn-1, ps, 1)
 	if err != nil {
 		err = util.Err("ListFile list find by oid(%v),owner(%v),name(%v),type(%v),pid(%v),tags(%v) fail with error(%v)",
 			uid, OWN_USR, name, typ, pid, tags, err)
@@ -117,6 +119,7 @@ func ListFile(hs *routing.HTTPSession) routing.HResult {
 	return hs.MsgRes(util.Map{
 		"bases": bases,
 		"files": fs,
+		"total": total,
 	})
 }
 
