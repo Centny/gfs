@@ -90,6 +90,7 @@ type File struct {
 	Oid    string   `bson:"oid" json:"oid"`
 	Owner  string   `bson:"owner" json:"owner"`
 	Name   string   `bson:"name" json:"name"`
+	EXT    string   `bson:"ext" json:"ext"`   //file externd
 	Type   string   `bson:"type" json:"type"` //type
 	Tags   []string `bson:"tags" json:"tags"`
 	Desc   string   `bson:"desc" json:"desc"`

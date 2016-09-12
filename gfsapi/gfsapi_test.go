@@ -821,7 +821,7 @@ func TestFile(t *testing.T) {
 		return
 	}
 	folderID := folder.StrValP("/folder/id")
-	res, err := DoListFile("", gfsdb.FT_FOLDER, nil, nil, 1, 100)
+	res, err := DoListFile("", gfsdb.FT_FOLDER, nil, nil, nil, 1, 100)
 	if err != nil {
 		t.Error(err.Error())
 		return
@@ -838,7 +838,7 @@ func TestFile(t *testing.T) {
 		t.Error(err)
 		return
 	}
-	res, err = DoListFile("", gfsdb.FT_FOLDER, nil, nil, 1, 100)
+	res, err = DoListFile("", gfsdb.FT_FOLDER, nil, nil, nil, 1, 100)
 	if err != nil {
 		t.Error(err.Error())
 		return
@@ -860,7 +860,7 @@ func TestFile(t *testing.T) {
 		t.Error(err)
 		return
 	}
-	res, err = DoListFile("", gfsdb.FT_FOLDER, nil, nil, 1, 100)
+	res, err = DoListFile("", gfsdb.FT_FOLDER, nil, nil, nil, 1, 100)
 	if err != nil {
 		t.Error(err.Error())
 		return
@@ -901,7 +901,7 @@ func TestFile(t *testing.T) {
 		return
 	}
 	subFolderID := sub.StrValP("/folder/id")
-	res, err = DoListFile("", gfsdb.FT_FOLDER, []string{folderID}, nil, 1, 100)
+	res, err = DoListFile("", gfsdb.FT_FOLDER, []string{folderID}, nil, nil, 1, 100)
 	if err != nil {
 		t.Error(err.Error())
 		return
@@ -929,7 +929,7 @@ func TestFile(t *testing.T) {
 		t.Error("error")
 		return
 	}
-	res, err = DoListFile("", gfsdb.FT_FOLDER, nil, nil, 1, 100) //check folder
+	res, err = DoListFile("", gfsdb.FT_FOLDER, nil, nil, nil, 1, 100) //check folder
 	if err != nil {
 		t.Error(err.Error())
 		return
@@ -939,7 +939,7 @@ func TestFile(t *testing.T) {
 		t.Error("error")
 		return
 	}
-	res, err = DoListFile("", gfsdb.FT_FILE, nil, nil, 1, 100) //check file
+	res, err = DoListFile("", gfsdb.FT_FILE, nil, nil, nil, 1, 100) //check file
 	if err != nil {
 		t.Error(err.Error())
 		return
@@ -949,7 +949,7 @@ func TestFile(t *testing.T) {
 		t.Error("error")
 		return
 	}
-	res, err = DoListFile("", "", nil, nil, 1, 100) //check all
+	res, err = DoListFile("", "", nil, nil, nil, 1, 100) //check all
 	if err != nil {
 		t.Error(err.Error())
 		return
@@ -977,7 +977,7 @@ func TestFile(t *testing.T) {
 		t.Error("error")
 		return
 	}
-	res, err = DoListFile("", gfsdb.FT_FOLDER, []string{folderID}, nil, 1, 100) //check folder
+	res, err = DoListFile("", gfsdb.FT_FOLDER, []string{folderID}, nil, nil, 1, 100) //check folder
 	if err != nil {
 		t.Error(err.Error())
 		return
@@ -987,7 +987,7 @@ func TestFile(t *testing.T) {
 		t.Error("error")
 		return
 	}
-	res, err = DoListFile("", gfsdb.FT_FILE, []string{folderID}, nil, 1, 100) //check file
+	res, err = DoListFile("", gfsdb.FT_FILE, []string{folderID}, nil, nil, 1, 100) //check file
 	if err != nil {
 		t.Error(err.Error())
 		return
@@ -997,7 +997,7 @@ func TestFile(t *testing.T) {
 		t.Error("error")
 		return
 	}
-	res, err = DoListFile("", "", []string{folderID}, nil, 1, 100) //check all
+	res, err = DoListFile("", "", []string{folderID}, nil, nil, 1, 100) //check all
 	if err != nil {
 		t.Error(err.Error())
 		return

@@ -1,6 +1,8 @@
 package gfsapi
 
 import (
+	"strings"
+
 	"github.com/Centny/gfs/gfsdb"
 	"github.com/Centny/gwf/log"
 	"github.com/Centny/gwf/routing"
@@ -82,16 +84,17 @@ import (
 //@case,File System
 func ListFile(hs *routing.HTTPSession) routing.HResult {
 	var name, typ string
-	var pid, tags []string
+	var pid, ext, tags []string
 	var pn, ps = 1, 20
 	var err = hs.ValidCheckVal(`
 		name,O|S,L:0;
 		type,O|S,O:file~folder;
+		ext,O|S,L:0;
 		pid,O|S,L:0;
 		tags,O|S,L:0;
 		pn,O|I,R:0;
 		ps,O|I,R:0;
-		`, &name, &typ, &pid, &tags, &pn, &ps)
+		`, &name, &typ, &ext, &pid, &tags, &pn, &ps)
 	if err != nil {
 		return hs.MsgResErr2(1, "arg-err", err)
 	}
@@ -99,7 +102,7 @@ func ListFile(hs *routing.HTTPSession) routing.HResult {
 	if len(pid) < 1 {
 		pid = []string{""}
 	}
-	fs, total, err := gfsdb.ListFilePaged(uid, OWN_USR, name, typ, pid, tags, []string{gfsdb.FS_N}, pn-1, ps, 1)
+	fs, total, err := gfsdb.ListFilePaged(uid, OWN_USR, name, typ, pid, ext, tags, []string{gfsdb.FS_N}, pn-1, ps, 1)
 	if err != nil {
 		err = util.Err("ListFile list find by oid(%v),owner(%v),name(%v),type(%v),pid(%v),tags(%v) fail with error(%v)",
 			uid, OWN_USR, name, typ, pid, tags, err)
@@ -175,10 +178,10 @@ func UpdateFile(hs *routing.HTTPSession) routing.HResult {
 //@url,normal http get request
 //	~/usr/api/removeFile?fid=xx		GET
 //@arg,the normal query arguments
-//	fid		R	the file/folder id
+//	fid		R	the file/folder id splited by comma
 /*
 	//remove file/folder
-	~/usr/api/removeFile?fid=<file id or folder id>
+	~/usr/api/removeFile?fid=x1,x2
 */
 //@ret,code/data return
 //	code	I	the common code.
@@ -196,7 +199,7 @@ func RemoveFile(hs *routing.HTTPSession) routing.HResult {
 	if len(fid) < 1 {
 		return hs.MsgResE3(1, "arg-err", "fid argument not found")
 	}
-	var err = gfsdb.RemoveFile(fid)
+	var err = gfsdb.RemoveFile(strings.Split(fid, ",")...)
 	if err != nil {
 		log.E("RemoveFile remove file by id(%v) fail with error(%v)", fid, err)
 		return hs.MsgResErr2(2, "srv-err", err)

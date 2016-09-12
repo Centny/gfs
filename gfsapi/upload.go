@@ -48,6 +48,7 @@ import (
 //	file.oid		S	the owner id
 //	file.owner		S	the owner type.
 //	file.tags		A	the file tag.
+//	file.exec		S	the convter executing status in running/err/done, if the file type is not supported to convert return null.
 /*
 	The json example result when success.
 	{
@@ -165,6 +166,7 @@ func (f *FSH) Up(hs *routing.HTTPSession) routing.HResult {
 		var file = &gfsdb.File{}
 		file.Fid, file.Name = rf.Id, rf.Name
 		file.Oid, file.Owner, file.Type = hs.StrVal("uid"), OWN_USR, gfsdb.FT_FILE
+		file.EXT = rf.EXT
 		if len(tags) > 0 {
 			file.Tags = strings.Split(tags, ",")
 		}

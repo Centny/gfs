@@ -10,6 +10,7 @@ func TestFile(t *testing.T) {
 		Fid:    "xxx",
 		Oid:    "1",
 		Owner:  "USR",
+		EXT:    ".txt",
 		Type:   FT_FILE,
 		Status: FS_N,
 		Tags:   []string{"f0"},
@@ -59,6 +60,7 @@ func TestFile(t *testing.T) {
 		Name:   "xkdd",
 		Oid:    "1",
 		Owner:  "USR",
+		EXT:    ".txt",
 		Type:   FT_FOLDER,
 		Status: FS_N,
 	}
@@ -93,6 +95,7 @@ func TestFile(t *testing.T) {
 		Fid:    "xxx2",
 		Oid:    "1",
 		Owner:  "USR",
+		EXT:    ".txt",
 		Type:   FT_FILE,
 		Pid:    file.Id,
 		Status: FS_N,
@@ -112,6 +115,7 @@ func TestFile(t *testing.T) {
 		Oid:    "1",
 		Pid:    file.Id,
 		Owner:  "USR",
+		EXT:    ".txt",
 		Type:   FT_FOLDER,
 		Status: FS_N,
 	}
@@ -128,6 +132,7 @@ func TestFile(t *testing.T) {
 		Fid:    "xd",
 		Oid:    "1",
 		Owner:  "USR",
+		EXT:    ".txt",
 		Type:   FT_FILE,
 		Pid:    file2.Id,
 		Status: FS_N,
@@ -142,7 +147,7 @@ func TestFile(t *testing.T) {
 		t.Error("error")
 		return
 	}
-	fs, err := ListFile("1", "USR", "", "", []string{""}, nil, []string{FS_N})
+	fs, err := ListFile("1", "USR", "", "", []string{""}, nil, nil, []string{FS_N})
 	if err != nil {
 		t.Error(err.Error())
 		return
@@ -152,7 +157,7 @@ func TestFile(t *testing.T) {
 		t.Error("error")
 		return
 	}
-	fs, err = ListFile("1", "USR", "", FT_FILE, []string{""}, []string{"f0"}, []string{FS_N})
+	fs, err = ListFile("1", "USR", "", FT_FILE, []string{""}, []string{".txt"}, []string{"f0"}, []string{FS_N})
 	if err != nil {
 		t.Error(err.Error())
 		return
@@ -162,7 +167,7 @@ func TestFile(t *testing.T) {
 		t.Error("error")
 		return
 	}
-	fs, err = ListFile("1", "USR", "", "", []string{file2.Id}, nil, []string{FS_N})
+	fs, err = ListFile("1", "USR", "", "", []string{file2.Id}, nil, nil, []string{FS_N})
 	if err != nil {
 		t.Error(err.Error())
 		return

@@ -68,8 +68,8 @@ func UpdateFile(file *File) error {
 	return C(CN_FILE).Update(bson.M{"_id": file.Id}, bson.M{"$set": update})
 }
 
-func RemoveFile(id string) error {
-	return C(CN_FILE).Remove(bson.M{"_id": id})
+func RemoveFile(id ...string) error {
+	return C(CN_FILE).Remove(bson.M{"_id": bson.M{"$in": id}})
 }
 
 func CountFile() (int, error) {
@@ -82,18 +82,13 @@ func FindFile(id string) (*File, error) {
 	return file, err
 }
 
-func ListFile(oid, owner, name, typ string, pid, tags, status []string) ([]*File, error) {
-	var fs, _, err = ListFilePaged(oid, owner, name, typ, pid, tags, status, 0, 0, 0)
+func ListFile(oid, owner, name, typ string, pid, ext, tags, status []string) ([]*File, error) {
+	var fs, _, err = ListFilePaged(oid, owner, name, typ, pid, ext, tags, status, 0, 0, 0)
 	return fs, err
 }
 
-func ListFilePaged(oid, owner, name, typ string, pid, tags, status []string, pn, ps, retTotal int) (fs []*File, total int, err error) {
+func ListFilePaged(oid, owner, name, typ string, pid, ext, tags, status []string, pn, ps, retTotal int) (fs []*File, total int, err error) {
 	var query = bson.M{}
-	if len(pid) > 0 {
-		query["pid"] = bson.M{
-			"$in": pid,
-		}
-	}
 	if len(oid) > 0 {
 		query["oid"] = oid
 	}
@@ -108,6 +103,16 @@ func ListFilePaged(oid, owner, name, typ string, pid, tags, status []string, pn,
 	}
 	if len(typ) > 0 {
 		query["type"] = typ
+	}
+	if len(pid) > 0 {
+		query["pid"] = bson.M{
+			"$in": pid,
+		}
+	}
+	if len(ext) > 0 {
+		query["ext"] = bson.M{
+			"$in": ext,
+		}
 	}
 	if len(tags) > 0 {
 		query["tags"] = bson.M{
@@ -136,7 +141,9 @@ func ListFilePaged(oid, owner, name, typ string, pid, tags, status []string, pn,
 	} else if ShowLog > 0 {
 		log.D("ListFilePaged list file succes with %v found, the query is:\n%v", len(fs), util.S2Json(query))
 	}
-	total, err = C(CN_FILE).Find(query).Count()
+	if retTotal > 0 {
+		total, err = C(CN_FILE).Find(query).Count()
+	}
 	return fs, total, err
 
 }
