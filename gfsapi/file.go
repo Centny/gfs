@@ -18,6 +18,7 @@ import (
 //	name	O	the search key for file name
 //	type	O	the type in `file/folder` to show the file or folder
 //	pid		O	the parent folder id
+//	ext		O	the file ext splted by comma
 //	tags	O	the file/folder tags to filter
 //	pn		O	the page number begin of 1, default is 1
 //	ps		O	the page size, default is 20
