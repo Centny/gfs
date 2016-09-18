@@ -134,6 +134,7 @@ func ListFile(hs *routing.HTTPSession) routing.HResult {
 //	~/usr/api/updateFile?fid=xx		GET
 //@arg,the normal query arguments
 //	fid		R	the file/folder id
+//	pid		O	the file/folder parent id, using ROOT to move file/folder to root
 //	name	O	the file/folder name
 //	desc	O	the file/folder desc
 //	tags	O	the file/folder tags
@@ -166,6 +167,17 @@ func UpdateFile(hs *routing.HTTPSession) routing.HResult {
 	}
 	file.Oid = hs.StrVal("uid")
 	file.Owner = OWN_USR
+	if len(file.Pid) > 0 && file.Pid != "ROOT" {
+		parent, err := gfsdb.FindFile(file.Pid)
+		if err != nil {
+			return hs.MsgResErr2(2, "srv-err", err)
+		}
+		if parent.Oid != file.Oid || parent.Owner != file.Owner {
+			err = util.Err("the parent is not your")
+			log.W("UpdateFile having user(%v) update not him file(%v),pid(%v)", file.Oid, file.Oid, file.Pid)
+			return hs.MsgResErr2(3, "srv-err", err)
+		}
+	}
 	err = gfsdb.UpdateFile(file)
 	if err != nil {
 		return hs.MsgResErr2(2, "srv-err", err)
@@ -200,12 +212,12 @@ func RemoveFile(hs *routing.HTTPSession) routing.HResult {
 	if len(fid) < 1 {
 		return hs.MsgResE3(1, "arg-err", "fid argument not found")
 	}
-	var err = gfsdb.RemoveFile(strings.Split(fid, ",")...)
+	var removed, err = gfsdb.RemoveFile(strings.Split(fid, ",")...)
 	if err != nil {
 		log.E("RemoveFile remove file by id(%v) fail with error(%v)", fid, err)
 		return hs.MsgResErr2(2, "srv-err", err)
 	}
-	return hs.MsgRes("OK")
+	return hs.MsgRes(removed)
 }
 
 //AddFolder adding fild folder

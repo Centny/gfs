@@ -855,7 +855,7 @@ func TestFile(t *testing.T) {
 	}
 	//
 	//test remove file
-	err = DoRemoveFile(folderID)
+	_, err = DoRemoveFile(folderID)
 	if err != nil {
 		t.Error(err)
 		return

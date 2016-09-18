@@ -3,6 +3,7 @@ package gfsdb
 import (
 	"github.com/Centny/gwf/log"
 	"github.com/Centny/gwf/util"
+	"gopkg.in/mgo.v2"
 	tmgo "gopkg.in/mgo.v2"
 	"gopkg.in/mgo.v2/bson"
 )
@@ -61,15 +62,22 @@ func UpdateFile(file *File) error {
 	if len(file.Desc) > 0 {
 		update["desc"] = file.Desc
 	}
-	if len(file.Pid) > 0 {
+	if file.Pid == "ROOT" {
+		update["pid"] = ""
+	} else if len(file.Pid) > 0 {
 		update["pid"] = file.Pid
 	}
 	update["time"] = util.Now()
 	return C(CN_FILE).Update(bson.M{"_id": file.Id}, bson.M{"$set": update})
 }
 
-func RemoveFile(id ...string) error {
-	return C(CN_FILE).Remove(bson.M{"_id": bson.M{"$in": id}})
+func RemoveFile(id ...string) (removed int, err error) {
+	var changed *mgo.ChangeInfo
+	changed, err = C(CN_FILE).RemoveAll(bson.M{"_id": bson.M{"$in": id}})
+	if err == nil {
+		removed = changed.Removed
+	}
+	return
 }
 
 func CountFile() (int, error) {

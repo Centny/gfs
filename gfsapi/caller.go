@@ -155,17 +155,17 @@ func DoUpdateFile(fid, name, desc string, tags []string) error {
 	return util.Err("list file error->%v", util.S2Json(res))
 }
 
-func DoRemoveFile(fid string) error {
+func DoRemoveFile(fid string) (int, error) {
 	var res, err = util.HGet2(
 		"%v/usr/api/removeFile?fid=%v&%v",
 		SrvAddr(), fid, SrvArgs())
 	if err != nil {
-		return err
+		return 0, err
 	}
 	if res.Exist("code") && res.IntVal("code") == 0 {
-		return nil
+		return int(res.IntVal("data")), nil
 	}
-	return util.Err("remove file error->%v", util.S2Json(res))
+	return 0, util.Err("remove file error->%v", util.S2Json(res))
 }
 
 func DoAddFolder(pid, name, desc string, tags []string) (util.Map, error) {
