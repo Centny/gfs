@@ -29,18 +29,21 @@ func FOI_F(rf *F) (int, error) {
 	}
 	var mv = rf.ToBsonM()
 	delete(mv, "pub")
+	var update = bson.M{
+		"$setOnInsert": mv,
+	}
+	if len(rf.Pub) > 0 {
+		update["$set"] = bson.M{
+			"pub": rf.Pub,
+		}
+	}
 	var res, err = C(CN_F).Find(bson.M{
 		"$or": []bson.M{
 			bson.M{"sha": rf.SHA},
 			bson.M{"md5": rf.MD5},
 		},
 	}).Apply(tmgo.Change{
-		Update: bson.M{
-			"$setOnInsert": mv,
-			"$set": bson.M{
-				"pub": rf.Pub,
-			},
-		},
+		Update:    update,
 		Upsert:    true,
 		ReturnNew: true,
 	}, rf)
