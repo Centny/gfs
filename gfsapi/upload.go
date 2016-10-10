@@ -131,6 +131,12 @@ func (f *FSH) Up(hs *routing.HTTPSession) routing.HResult {
 		os.Remove(f.Base.AbsPath(hs, rf.Path))
 		return hs.MsgResErr2(-3, "srv-err", err)
 	}
+	_, err = gfsdb.FOI_Mark(rf.Id, rf.Id)
+	if err != nil {
+		err = util.Err("FSH adding mark to really file by id(%v),mark(%v) error->%v", rf.Id, mark, err)
+		log.E("%v", err)
+		return hs.MsgResErr2(-4, "srv-err", err)
+	}
 	if len(mark) > 0 {
 		mk, err := gfsdb.FOI_Mark(mark, rf.Id)
 		if err != nil {
