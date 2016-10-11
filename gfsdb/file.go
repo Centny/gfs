@@ -91,11 +91,11 @@ func FindFile(id string) (*File, error) {
 }
 
 func ListFile(oid, owner, name, typ string, pid, ext, tags, status []string) ([]*File, error) {
-	var fs, _, err = ListFilePaged(oid, owner, name, typ, pid, ext, tags, status, 0, 0, 0)
+	var fs, _, err = ListFilePaged(oid, owner, name, typ, pid, ext, tags, status, "", 0, 0, 0, 0)
 	return fs, err
 }
 
-func ListFilePaged(oid, owner, name, typ string, pid, ext, tags, status []string, pn, ps, retTotal int) (fs []*File, total int, err error) {
+func ListFilePaged(oid, owner, name, typ string, pid, ext, tags, status []string, sort string, reverseExt, pn, ps, retTotal int) (fs []*File, total int, err error) {
 	var query = bson.M{}
 	if len(oid) > 0 {
 		query["oid"] = oid
@@ -118,8 +118,14 @@ func ListFilePaged(oid, owner, name, typ string, pid, ext, tags, status []string
 		}
 	}
 	if len(ext) > 0 {
-		query["ext"] = bson.M{
-			"$in": ext,
+		if reverseExt > 0 {
+			query["ext"] = bson.M{
+				"$nin": ext,
+			}
+		} else {
+			query["ext"] = bson.M{
+				"$in": ext,
+			}
 		}
 	}
 	if len(tags) > 0 {
@@ -135,6 +141,9 @@ func ListFilePaged(oid, owner, name, typ string, pid, ext, tags, status []string
 		}
 	}
 	var Q = C(CN_FILE).Find(query)
+	if len(sort) > 0 {
+		Q = Q.Sort(sort)
+	}
 	if pn > 0 {
 		Q = Q.Skip(pn * ps)
 	}

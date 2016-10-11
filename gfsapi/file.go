@@ -17,8 +17,10 @@ import (
 //@arg,the normal query arguments
 //	name	O	the search key for file name
 //	type	O	the type in `file/folder` to show the file or folder
+//	sort	O	the sort field, eg: -time
 //	pid		O	the parent folder id
 //	ext		O	the file ext splted by comma
+//	notExt	O	reverse ext query, default 0, 1 is query not in ext
 //	tags	O	the file/folder tags to filter
 //	pn		O	the page number begin of 1, default is 1
 //	ps		O	the page size, default is 20
@@ -84,18 +86,21 @@ import (
 //@author,cny,2016-08-24
 //@case,File System
 func ListFile(hs *routing.HTTPSession) routing.HResult {
-	var name, typ string
+	var name, typ, sort string
 	var pid, ext, tags []string
+	var notExt int
 	var pn, ps = 1, 20
 	var err = hs.ValidCheckVal(`
 		name,O|S,L:0;
 		type,O|S,O:file~folder;
+		sort,O|S,L:0;
 		ext,O|S,L:0;
+		not_ext,O|I,O:0~1;
 		pid,O|S,L:0;
 		tags,O|S,L:0;
 		pn,O|I,R:0;
 		ps,O|I,R:0;
-		`, &name, &typ, &ext, &pid, &tags, &pn, &ps)
+		`, &name, &typ, &sort, &ext, &notExt, &pid, &tags, &pn, &ps)
 	if err != nil {
 		return hs.MsgResErr2(1, "arg-err", err)
 	}
@@ -103,7 +108,7 @@ func ListFile(hs *routing.HTTPSession) routing.HResult {
 	if len(pid) < 1 {
 		pid = []string{""}
 	}
-	fs, total, err := gfsdb.ListFilePaged(uid, OWN_USR, name, typ, pid, ext, tags, []string{gfsdb.FS_N}, pn-1, ps, 1)
+	fs, total, err := gfsdb.ListFilePaged(uid, OWN_USR, name, typ, pid, ext, tags, []string{gfsdb.FS_N}, sort, notExt, pn-1, ps, 1)
 	if err != nil {
 		err = util.Err("ListFile list find by oid(%v),owner(%v),name(%v),type(%v),pid(%v),tags(%v) fail with error(%v)",
 			uid, OWN_USR, name, typ, pid, tags, err)

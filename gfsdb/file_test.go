@@ -177,4 +177,14 @@ func TestFile(t *testing.T) {
 		t.Error("error")
 		return
 	}
+	fs, _, err = ListFilePaged("1", "USR", "", FT_FILE, []string{""}, []string{".txt"}, []string{"f0"}, []string{FS_N}, 1, 0, 0, 0)
+	if err != nil {
+		t.Error(err.Error())
+		return
+	}
+	if len(fs) != 0 {
+		fmt.Println(fs)
+		t.Error("error")
+		return
+	}
 }
