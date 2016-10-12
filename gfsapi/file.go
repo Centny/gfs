@@ -20,7 +20,7 @@ import (
 //	sort	O	the sort field, eg: -time
 //	pid		O	the parent folder id
 //	ext		O	the file ext splted by comma
-//	notExt	O	reverse ext query, default 0, 1 is query not in ext
+//	not_ext	O	reverse ext query, default 0, 1 is query not in ext
 //	tags	O	the file/folder tags to filter
 //	pn		O	the page number begin of 1, default is 1
 //	ps		O	the page size, default is 20
