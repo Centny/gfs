@@ -148,32 +148,9 @@ func ListFilePaged(oid, owner, name, typ string, pid, ext, tags, status []string
 		}
 	}
 	if retExtCount > 0 {
-		var pipe = []bson.M{
-			bson.M{
-				"$match": query,
-			},
-			bson.M{
-				"$match": bson.M{
-					"type": FT_FILE,
-				},
-			},
-			bson.M{
-				"$group": bson.M{
-					"_id": "$ext",
-					"count": bson.M{
-						"$sum": 1,
-					},
-				},
-			},
-		}
-		err = C(CN_FILE).Pipe(pipe).All(&extCount)
+		extCount, err = CountFileExt(oid, owner, pid, status)
 		if err != nil {
-			log.E("ListFilePaged count ext fail with error(%v), the pip is:\n%v", err, util.S2Json(pipe))
 			return
-		}
-		for _, ec := range extCount {
-			ec["ext"] = ec["_id"]
-			delete(ec, "_id")
 		}
 	}
 	var Q = C(CN_FILE).Find(query)
@@ -192,6 +169,54 @@ func ListFilePaged(oid, owner, name, typ string, pid, ext, tags, status []string
 		return
 	} else if ShowLog > 0 {
 		log.D("ListFilePaged list file succes with %v found, the query is:\n%v", len(fs), util.S2Json(query))
+	}
+	return
+}
+
+func CountFileExt(oid, owner string, pid, status []string) (extCount []util.Map, err error) {
+	var query = bson.M{}
+	if len(pid) > 0 {
+		query["pid"] = bson.M{
+			"$in": pid,
+		}
+	}
+	if len(oid) > 0 {
+		query["oid"] = oid
+	}
+	if len(owner) > 0 {
+		query["owner"] = owner
+	}
+	if len(status) > 0 {
+		query["status"] = bson.M{
+			"$in": status,
+		}
+	}
+	var pipe = []bson.M{
+		bson.M{
+			"$match": query,
+		},
+		bson.M{
+			"$match": bson.M{
+				"type": FT_FILE,
+			},
+		},
+		bson.M{
+			"$group": bson.M{
+				"_id": "$ext",
+				"count": bson.M{
+					"$sum": 1,
+				},
+			},
+		},
+	}
+	err = C(CN_FILE).Pipe(pipe).All(&extCount)
+	if err != nil {
+		log.E("ListFilePaged count ext fail with error(%v), the pip is:\n%v", err, util.S2Json(pipe))
+		return
+	}
+	for _, ec := range extCount {
+		ec["ext"] = ec["_id"]
+		delete(ec, "_id")
 	}
 	return
 }

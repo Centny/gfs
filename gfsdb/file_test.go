@@ -198,4 +198,31 @@ func TestFile(t *testing.T) {
 		t.Error("error")
 		return
 	}
+	//
+	//test list file count
+	f2 = &File{
+		Fid:    "xdds",
+		Oid:    "1",
+		Owner:  "USR",
+		EXT:    ".txt2",
+		Type:   FT_FILE,
+		Pid:    "",
+		Status: FS_N,
+		Tags:   []string{"f2"},
+	}
+	updated, err = FOI_File(f2)
+	if err != nil || updated < 1 {
+		t.Error("error")
+		return
+	}
+	fs, total, extCount, err = ListFilePaged("1", "USR", "", FT_FILE, []string{""}, []string{".txt"}, []string{"f0"}, []string{FS_N}, "", 0, 0, 0, 1, 1)
+	if err != nil {
+		t.Error(err.Error())
+		return
+	}
+	if len(fs) != 1 || total != 1 || len(extCount) != 2 {
+		fmt.Println(extCount)
+		t.Error("error")
+		return
+	}
 }
