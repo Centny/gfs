@@ -15,15 +15,16 @@ import (
 //@url,normal http get request
 //	~/usr/api/listFile		GET
 //@arg,the normal query arguments
-//	name	O	the search key for file name
-//	type	O	the type in `file/folder` to show the file or folder
-//	sort	O	the sort field, eg: -time
-//	pid		O	the parent folder id
-//	ext		O	the file ext splted by comma
-//	not_ext	O	reverse ext query, default 0, 1 is query not in ext
-//	tags	O	the file/folder tags to filter
-//	pn		O	the page number begin of 1, default is 1
-//	ps		O	the page size, default is 20
+//	name			O	the search key for file name
+//	type			O	the type in `file/folder` to show the file or folder
+//	sort			O	the sort field, eg: -time
+//	pid				O	the parent folder id
+//	ext				O	the file ext splted by comma
+//	not_ext			O	reverse ext query, default 0, 1 is query not in ext
+//	tags			O	the file/folder tags to filter
+//	pn				O	the page number begin of 1, default is 1
+//	ps				O	the page size, default is 20
+//	ret_ext_count	O	return the ext count
 /*
 	//
 	//list user file or folder
@@ -34,8 +35,9 @@ import (
 	~/usr/api/listFile?type=file&name=xx
 */
 //@ret,code/data return
-//	bases	O	the file base info, see upload api for deatail
-//	files	A	the user file info.
+//	bases		O	the file base info, see upload api for deatail
+//	files		A	the user file info.
+//	ext_count	A	the ext count info.
 /*	the example
 	{
 	    "code": 0,
@@ -78,7 +80,8 @@ import (
 	            "tags": ["x", "y", "z"],
 	            "time": 1.472025501961e+12,
 	            "type": "file"
-	        }]
+	        }],
+			"ext_count":[{"_id":".mp4","count":1}]
 	    }
 	}
 */
@@ -90,6 +93,7 @@ func ListFile(hs *routing.HTTPSession) routing.HResult {
 	var pid, ext, tags []string
 	var notExt int
 	var pn, ps = 1, 20
+	var retExtCount = 0
 	var err = hs.ValidCheckVal(`
 		name,O|S,L:0;
 		type,O|S,O:file~folder;
@@ -100,7 +104,8 @@ func ListFile(hs *routing.HTTPSession) routing.HResult {
 		tags,O|S,L:0;
 		pn,O|I,R:0;
 		ps,O|I,R:0;
-		`, &name, &typ, &sort, &ext, &notExt, &pid, &tags, &pn, &ps)
+		ret_ext_count,O|I,O:0~1;
+		`, &name, &typ, &sort, &ext, &notExt, &pid, &tags, &pn, &ps, &retExtCount)
 	if err != nil {
 		return hs.MsgResErr2(1, "arg-err", err)
 	}
@@ -108,7 +113,7 @@ func ListFile(hs *routing.HTTPSession) routing.HResult {
 	if len(pid) < 1 {
 		pid = []string{""}
 	}
-	fs, total, err := gfsdb.ListFilePaged(uid, OWN_USR, name, typ, pid, ext, tags, []string{gfsdb.FS_N}, sort, notExt, pn-1, ps, 1)
+	fs, total, extCount, err := gfsdb.ListFilePaged(uid, OWN_USR, name, typ, pid, ext, tags, []string{gfsdb.FS_N}, sort, notExt, pn-1, ps, 1, retExtCount)
 	if err != nil {
 		err = util.Err("ListFile list find by oid(%v),owner(%v),name(%v),type(%v),pid(%v),tags(%v) fail with error(%v)",
 			uid, OWN_USR, name, typ, pid, tags, err)
@@ -126,9 +131,10 @@ func ListFile(hs *routing.HTTPSession) routing.HResult {
 		return hs.MsgResErr2(3, "srv-err", err)
 	}
 	return hs.MsgRes(util.Map{
-		"bases": bases,
-		"files": fs,
-		"total": total,
+		"bases":     bases,
+		"files":     fs,
+		"total":     total,
+		"ext_count": extCount,
 	})
 }
 

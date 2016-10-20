@@ -128,10 +128,10 @@ func DoAdmStatus() (util.Map, error) {
 	return util.HGet2("%v/adm/status?%v", SrvAddr(), SrvArgs())
 }
 
-func DoListFile(name, typ string, pid, ext, tags []string, pn, ps int) (util.Map, error) {
+func DoListFile(name, typ string, pid, ext, tags []string, reverseExt, pn, ps, retExtCount int) (util.Map, error) {
 	var res, err = util.HGet2(
-		"%v/usr/api/listFile?name=%v&type=%v&pid=%v&ext=%v&tags=%v&pn=%v&ps=%v&%v",
-		SrvAddr(), name, typ, strings.Join(pid, ","), strings.Join(ext, ","), strings.Join(tags, ","), pn, ps, SrvArgs())
+		"%v/usr/api/listFile?name=%v&type=%v&pid=%v&ext=%v&tags=%v&not_ext=%v&pn=%v&ps=%v&ret_ext_count=%v&%v",
+		SrvAddr(), name, typ, strings.Join(pid, ","), strings.Join(ext, ","), strings.Join(tags, ","), reverseExt, pn, ps, retExtCount, SrvArgs())
 	if err != nil {
 		return nil, err
 	}

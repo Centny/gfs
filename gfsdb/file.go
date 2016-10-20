@@ -91,11 +91,11 @@ func FindFile(id string) (*File, error) {
 }
 
 func ListFile(oid, owner, name, typ string, pid, ext, tags, status []string) ([]*File, error) {
-	var fs, _, err = ListFilePaged(oid, owner, name, typ, pid, ext, tags, status, "", 0, 0, 0, 0)
+	var fs, _, _, err = ListFilePaged(oid, owner, name, typ, pid, ext, tags, status, "", 0, 0, 0, 0, 0)
 	return fs, err
 }
 
-func ListFilePaged(oid, owner, name, typ string, pid, ext, tags, status []string, sort string, reverseExt, pn, ps, retTotal int) (fs []*File, total int, err error) {
+func ListFilePaged(oid, owner, name, typ string, pid, ext, tags, status []string, sort string, reverseExt, pn, ps, retTotal, retExtCount int) (fs []*File, total int, extCount []util.Map, err error) {
 	var query = bson.M{}
 	if len(oid) > 0 {
 		query["oid"] = oid
@@ -140,6 +140,42 @@ func ListFilePaged(oid, owner, name, typ string, pid, ext, tags, status []string
 			"$in": status,
 		}
 	}
+	if retTotal > 0 {
+		total, err = C(CN_FILE).Find(query).Count()
+		if err != nil {
+			log.E("ListFilePaged count file fail with error(%v), the query is:\n%v", err, util.S2Json(query))
+			return
+		}
+	}
+	if retExtCount > 0 {
+		var pipe = []bson.M{
+			bson.M{
+				"$match": query,
+			},
+			bson.M{
+				"$match": bson.M{
+					"type": FT_FILE,
+				},
+			},
+			bson.M{
+				"$group": bson.M{
+					"_id": "$ext",
+					"count": bson.M{
+						"$sum": 1,
+					},
+				},
+			},
+		}
+		err = C(CN_FILE).Pipe(pipe).All(&extCount)
+		if err != nil {
+			log.E("ListFilePaged count ext fail with error(%v), the pip is:\n%v", err, util.S2Json(pipe))
+			return
+		}
+		for _, ec := range extCount {
+			ec["ext"] = ec["_id"]
+			delete(ec, "_id")
+		}
+	}
 	var Q = C(CN_FILE).Find(query)
 	if len(sort) > 0 {
 		Q = Q.Sort(sort)
@@ -150,17 +186,12 @@ func ListFilePaged(oid, owner, name, typ string, pid, ext, tags, status []string
 	if ps > 0 {
 		Q = Q.Limit(ps)
 	}
-	// fmt.Println(util.S2Json(query))
 	err = Q.All(&fs)
 	if err != nil {
 		log.E("ListFilePaged list file fail with error(%v), the query is:\n%v", err, util.S2Json(query))
-		return fs, 0, err
+		return
 	} else if ShowLog > 0 {
 		log.D("ListFilePaged list file succes with %v found, the query is:\n%v", len(fs), util.S2Json(query))
 	}
-	if retTotal > 0 {
-		total, err = C(CN_FILE).Find(query).Count()
-	}
-	return fs, total, err
-
+	return
 }

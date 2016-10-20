@@ -177,7 +177,18 @@ func TestFile(t *testing.T) {
 		t.Error("error")
 		return
 	}
-	fs, _, err = ListFilePaged("1", "USR", "", FT_FILE, []string{""}, []string{".txt"}, []string{"f0"}, []string{FS_N}, 1, 0, 0, 0)
+	fs, total, extCount, err := ListFilePaged("1", "USR", "", FT_FILE, []string{""}, []string{".txt"}, []string{"f0"}, []string{FS_N}, "", 0, 0, 0, 1, 1)
+	if err != nil {
+		t.Error(err.Error())
+		return
+	}
+	if len(fs) != 1 || total != 1 || len(extCount) != 1 || extCount[0].StrVal("ext") != ".txt" || extCount[0].IntVal("count") != 1 {
+		fmt.Println(extCount)
+		t.Error("error")
+		return
+	}
+	//
+	fs, _, _, err = ListFilePaged("1", "USR", "", FT_FILE, []string{""}, []string{".txt"}, []string{"f0"}, []string{FS_N}, "", 1, 0, 0, 1, 1)
 	if err != nil {
 		t.Error(err.Error())
 		return

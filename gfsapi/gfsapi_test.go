@@ -821,7 +821,7 @@ func TestFile(t *testing.T) {
 		return
 	}
 	folderID := folder.StrValP("/folder/id")
-	res, err := DoListFile("", gfsdb.FT_FOLDER, nil, nil, nil, 1, 100)
+	res, err := DoListFile("", gfsdb.FT_FOLDER, nil, nil, nil, 0, 1, 100, 1)
 	if err != nil {
 		t.Error(err.Error())
 		return
@@ -838,7 +838,7 @@ func TestFile(t *testing.T) {
 		t.Error(err)
 		return
 	}
-	res, err = DoListFile("", gfsdb.FT_FOLDER, nil, nil, nil, 1, 100)
+	res, err = DoListFile("", gfsdb.FT_FOLDER, nil, nil, nil, 0, 1, 100, 1)
 	if err != nil {
 		t.Error(err.Error())
 		return
@@ -848,7 +848,8 @@ func TestFile(t *testing.T) {
 		res.StrValP("/files/0/name") != "abc" ||
 		res.StrValP("/files/0/desc") != "desc2" ||
 		res.StrValP("/files/0/tags/0") != "x1" ||
-		res.StrValP("/files/0/tags/1") != "x2" {
+		res.StrValP("/files/0/tags/1") != "x2" ||
+		len(res.AryMapValP("/ext_count")) > 0 {
 		fmt.Println(util.S2Json(res))
 		t.Error("error")
 		return
@@ -860,7 +861,7 @@ func TestFile(t *testing.T) {
 		t.Error(err)
 		return
 	}
-	res, err = DoListFile("", gfsdb.FT_FOLDER, nil, nil, nil, 1, 100)
+	res, err = DoListFile("", gfsdb.FT_FOLDER, nil, nil, nil, 0, 1, 100, 1)
 	if err != nil {
 		t.Error(err.Error())
 		return
@@ -901,7 +902,7 @@ func TestFile(t *testing.T) {
 		return
 	}
 	subFolderID := sub.StrValP("/folder/id")
-	res, err = DoListFile("", gfsdb.FT_FOLDER, []string{folderID}, nil, nil, 1, 100)
+	res, err = DoListFile("", gfsdb.FT_FOLDER, []string{folderID}, nil, nil, 0, 1, 100, 1)
 	if err != nil {
 		t.Error(err.Error())
 		return
@@ -929,27 +930,32 @@ func TestFile(t *testing.T) {
 		t.Error("error")
 		return
 	}
-	res, err = DoListFile("", gfsdb.FT_FOLDER, nil, nil, nil, 1, 100) //check folder
+	res, err = DoListFile("", gfsdb.FT_FOLDER, nil, nil, nil, 0, 1, 100, 1) //check folder
 	if err != nil {
 		t.Error(err.Error())
 		return
 	}
-	if len(res.AryMapVal("files")) != 1 || len(res.MapVal("bases")) > 0 || res.StrValP("/files/0/id") != folderID {
+	if len(res.AryMapVal("files")) != 1 ||
+		len(res.MapVal("bases")) > 0 ||
+		res.StrValP("/files/0/id") != folderID {
 		fmt.Println(util.S2Json(res))
 		t.Error("error")
 		return
 	}
-	res, err = DoListFile("", gfsdb.FT_FILE, nil, nil, nil, 1, 100) //check file
+	res, err = DoListFile("", gfsdb.FT_FILE, nil, nil, nil, 0, 1, 100, 1) //check file
 	if err != nil {
 		t.Error(err.Error())
 		return
 	}
-	if len(res.AryMapVal("files")) != 1 || len(res.MapVal("bases")) != 1 || res.StrValP("/files/0/id") != fid {
+	if len(res.AryMapVal("files")) != 1 ||
+		len(res.MapVal("bases")) != 1 ||
+		res.StrValP("/files/0/id") != fid ||
+		len(res.AryMapValP("/ext_count")) < 1 {
 		fmt.Println(util.S2Json(res))
 		t.Error("error")
 		return
 	}
-	res, err = DoListFile("", "", nil, nil, nil, 1, 100) //check all
+	res, err = DoListFile("", "", nil, nil, nil, 0, 1, 100, 1) //check all
 	if err != nil {
 		t.Error(err.Error())
 		return
@@ -977,7 +983,7 @@ func TestFile(t *testing.T) {
 		t.Error("error")
 		return
 	}
-	res, err = DoListFile("", gfsdb.FT_FOLDER, []string{folderID}, nil, nil, 1, 100) //check folder
+	res, err = DoListFile("", gfsdb.FT_FOLDER, []string{folderID}, nil, nil, 0, 1, 100, 1) //check folder
 	if err != nil {
 		t.Error(err.Error())
 		return
@@ -987,7 +993,7 @@ func TestFile(t *testing.T) {
 		t.Error("error")
 		return
 	}
-	res, err = DoListFile("", gfsdb.FT_FILE, []string{folderID}, nil, nil, 1, 100) //check file
+	res, err = DoListFile("", gfsdb.FT_FILE, []string{folderID}, nil, nil, 0, 1, 100, 1) //check file
 	if err != nil {
 		t.Error(err.Error())
 		return
@@ -997,7 +1003,7 @@ func TestFile(t *testing.T) {
 		t.Error("error")
 		return
 	}
-	res, err = DoListFile("", "", []string{folderID}, nil, nil, 1, 100) //check all
+	res, err = DoListFile("", "", []string{folderID}, nil, nil, 0, 1, 100, 1) //check all
 	if err != nil {
 		t.Error(err.Error())
 		return
