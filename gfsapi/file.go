@@ -81,7 +81,7 @@ import (
 	            "time": 1.472025501961e+12,
 	            "type": "file"
 	        }],
-			"ext_count":[{"_id":".mp4","count":1}]
+			"ext_count":[{"ext":".mp4","count":1}]
 	    }
 	}
 */
