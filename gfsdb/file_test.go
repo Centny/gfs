@@ -225,4 +225,42 @@ func TestFile(t *testing.T) {
 		t.Error("error")
 		return
 	}
+	//
+	//test clear Tags
+	var f3 = &File{
+		Fid:    "xd22",
+		Oid:    "1",
+		Owner:  "USR",
+		EXT:    ".txt",
+		Type:   FT_FILE,
+		Pid:    file2.Id,
+		Status: FS_N,
+		Tags:   []string{"f2"},
+	}
+	updated, err = FOI_File(f3)
+	if err != nil {
+		t.Error(err.Error())
+		return
+	}
+	if updated < 1 {
+		t.Error("error")
+		return
+	}
+	err = UpdateFile(&File{
+		Id:   f3.Id,
+		Tags: []string{"_NONE_"},
+	})
+	if err != nil {
+		t.Error(err.Error())
+		return
+	}
+	tf, err := FindFile(f3.Id)
+	if err != nil {
+		t.Error(err.Error())
+		return
+	}
+	if len(tf.Tags) > 0 {
+		t.Error("error")
+		return
+	}
 }

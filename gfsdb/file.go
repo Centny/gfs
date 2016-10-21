@@ -57,7 +57,11 @@ func UpdateFile(file *File) error {
 		update["name"] = file.Name
 	}
 	if len(file.Tags) > 0 {
-		update["tags"] = file.Tags
+		if file.Tags[0] == "_NONE_" {
+			update["tags"] = []string{}
+		} else {
+			update["tags"] = file.Tags
+		}
 	}
 	if len(file.Desc) > 0 {
 		update["desc"] = file.Desc
@@ -148,7 +152,7 @@ func ListFilePaged(oid, owner, name, typ string, pid, ext, tags, status []string
 		}
 	}
 	if retExtCount > 0 {
-		extCount, err = CountFileExt(oid, owner, pid, status)
+		extCount, err = CountFileExt(oid, owner, name, pid, status)
 		if err != nil {
 			return
 		}
@@ -173,7 +177,7 @@ func ListFilePaged(oid, owner, name, typ string, pid, ext, tags, status []string
 	return
 }
 
-func CountFileExt(oid, owner string, pid, status []string) (extCount []util.Map, err error) {
+func CountFileExt(oid, owner, name string, pid, status []string) (extCount []util.Map, err error) {
 	var query = bson.M{}
 	if len(pid) > 0 {
 		query["pid"] = bson.M{
@@ -185,6 +189,12 @@ func CountFileExt(oid, owner string, pid, status []string) (extCount []util.Map,
 	}
 	if len(owner) > 0 {
 		query["owner"] = owner
+	}
+	if len(name) > 0 {
+		query["name"] = bson.M{
+			"$regex":   ".*" + name + ".*",
+			"$options": "mi",
+		}
 	}
 	if len(status) > 0 {
 		query["status"] = bson.M{

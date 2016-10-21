@@ -148,7 +148,7 @@ func ListFile(hs *routing.HTTPSession) routing.HResult {
 //	pid		O	the file/folder parent id, using ROOT to move file/folder to root
 //	name	O	the file/folder name
 //	desc	O	the file/folder desc
-//	tags	O	the file/folder tags
+//	tags	O	the file/folder tags, _NONE_ to clear all tags.
 /*
 	//update file/folder name
 	~/usr/api/updateFile?fid=xx&name=aaa
