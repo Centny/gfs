@@ -124,6 +124,7 @@ func (f *FSH) Up(hs *routing.HTTPSession) routing.HResult {
 	if pub > 0 {
 		rf.Pub = util.ShortLink(rf.SHA + rf.MD5)
 	}
+	var uname, uext = rf.Name, rf.EXT
 	updated, err := gfsdb.FOI_F(rf)
 	if err != nil {
 		err = util.Err("FSH find or insert really file by (%v) error->%v", util.S2Json(rf), err)
@@ -170,9 +171,9 @@ func (f *FSH) Up(hs *routing.HTTPSession) routing.HResult {
 			}
 		}
 		var file = &gfsdb.File{}
-		file.Fid, file.Name = rf.Id, rf.Name
+		file.Fid, file.Name = rf.Id, uname
 		file.Oid, file.Owner, file.Type = hs.StrVal("uid"), OWN_USR, gfsdb.FT_FILE
-		file.EXT = rf.EXT
+		file.EXT = uext
 		if len(tags) > 0 {
 			file.Tags = strings.Split(tags, ",")
 		}
