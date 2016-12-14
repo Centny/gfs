@@ -323,6 +323,7 @@ func (f *FSH) Info(hs *routing.HTTPSession) routing.HResult {
 */
 //@tag,file,info,list
 //@author,cny,2016-04-15
+//@case,File System
 func (f *FSH) ListInfo(hs *routing.HTTPSession) routing.HResult {
 	var err error
 	var fid, sha, md5, mark, pub string
