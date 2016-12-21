@@ -274,6 +274,16 @@ func UpdateExecF(id, es string) error {
 		})
 }
 
+func UpdateVerifyF(id, es string) error {
+	return C(CN_F).Update(
+		bson.M{"_id": id},
+		bson.M{
+			"$set": bson.M{
+				"verify": es,
+			},
+		})
+}
+
 type FFCM_H struct {
 }
 

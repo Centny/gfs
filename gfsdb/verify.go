@@ -4,13 +4,23 @@ import "gopkg.in/mgo.v2/bson"
 import "github.com/Centny/gwf/log"
 import "github.com/Centny/ffcm"
 import "path/filepath"
-import "fmt"
-import "github.com/Centny/gwf/util"
 
 func VerifyVideo(diri, diro string, exts, ignore []string) (total, fail int, err error) {
 	var query = bson.M{
 		"exec": bson.M{
 			"$in": []string{ES_DONE},
+		},
+		"$or": []bson.M{
+			{
+				"verify": bson.M{
+					"$exists": 0,
+				},
+			},
+			{
+				"verify": bson.M{
+					"$in": []string{VS_REDO, VS_ERROR},
+				},
+			},
 		},
 	}
 	if len(exts) > 0 {
@@ -23,11 +33,11 @@ func VerifyVideo(diri, diro string, exts, ignore []string) (total, fail int, err
 			"$nin": ignore,
 		}
 	}
-	fmt.Println(util.S2Json(query))
 	total, err = C(CN_F).Find(query).Count()
 	if err != nil {
 		return
 	}
+	var code = 0
 	var done = 0
 	var fs []*F
 	for {
@@ -40,20 +50,31 @@ func VerifyVideo(diri, diro string, exts, ignore []string) (total, fail int, err
 		}
 		log.D("VerifyVideo start verify video process %v/%v", done+len(fs), total)
 		for _, rf := range fs {
-			err = VerifyVideoF(diri, diro, rf)
+			code, err = VerifyVideoF(diri, diro, rf)
 			if err == nil {
 				continue
 			}
-			fail++
-			log.W("VerifyVideo %v, will mark file(%v) to exec running and redo", err, rf.Id)
-			err = UpdateExecF(rf.Id, ES_RUNNING)
-			if err != nil {
-				return
+			switch code {
+			case 1:
+				fail++
+				log.W("VerifyVideo %v, will mark file(%v) to zero", err, rf.Id)
+				err = UpdateVerifyF(rf.Id, VS_ZERO)
+				if err != nil {
+					return
+				}
+			default:
+				fail++
+				log.W("VerifyVideo %v, will mark file(%v) to redo", err, rf.Id)
+				err = UpdateVerifyF(rf.Id, VS_REDO)
+				if err != nil {
+					return
+				}
+				err = DoAddTask(rf)
+				if err != nil {
+					return
+				}
 			}
-			err = DoAddTask(rf)
-			if err != nil {
-				return
-			}
+
 		}
 		done += len(fs)
 	}
@@ -61,20 +82,20 @@ func VerifyVideo(diri, diro string, exts, ignore []string) (total, fail int, err
 	return
 }
 
-func VerifyVideoF(diri, diro string, rf *F) error {
+func VerifyVideoF(diri, diro string, rf *F) (int, error) {
 	var pc = rf.Info.StrValP("/V_pc/text")
 	if len(pc) > 0 {
-		err := ffcm.VerifyVideo(filepath.Join(diri, rf.Path), filepath.Join(diro, pc))
+		code, err := ffcm.VerifyVideo(filepath.Join(diri, rf.Path), filepath.Join(diro, pc))
 		if err != nil {
-			return err
+			return code, err
 		}
 	}
 	var phone = rf.Info.StrValP("/V_phone/text")
 	if len(phone) > 0 {
-		err := ffcm.VerifyVideo(filepath.Join(diri, rf.Path), filepath.Join(diro, phone))
+		code, err := ffcm.VerifyVideo(filepath.Join(diri, rf.Path), filepath.Join(diro, phone))
 		if err != nil {
-			return err
+			return code, err
 		}
 	}
-	return nil
+	return 0, nil
 }

@@ -12,6 +12,12 @@ const (
 	ES_ERROR   = "error"
 	ES_IGNORE  = "ignore"
 	ES_NONE    = "none"
+
+	//
+	VS_VERIFIED = "verified"
+	VS_ZERO     = "zero"
+	VS_REDO     = "redo"
+	VS_ERROR    = "error"
 )
 
 const (
