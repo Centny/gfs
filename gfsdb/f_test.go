@@ -365,7 +365,7 @@ func TestFFCM(t *testing.T) {
 			t.Error(err.Error())
 			return
 		}
-		fmt.Println("xx_001->waiting result...")
+		fmt.Println("xx_001->waiting result...", rt.Id)
 		if len(rt.Info) > 0 {
 			break
 		}
@@ -374,6 +374,34 @@ func TestFFCM(t *testing.T) {
 	fmt.Println("result->", util.S2Json(rt.Info))
 	//
 	//
+	//test verify
+	fmt.Println("test verify->\n\n\n")
+	total, fail, err := VerifyVideo(".", "sdata_o", []string{".mp4"}, []string{"abc"})
+	if err != nil || total < 1 || fail > 0 {
+		fmt.Println(total, fail, err)
+		t.Error("error")
+		return
+	}
+	os.RemoveAll("sdata_o")
+	total, fail, err = VerifyVideo(".", "sdata_o", []string{".mp4"}, []string{"abc"})
+	if err != nil || total < 1 || fail < 1 {
+		fmt.Println(total, fail, err)
+		t.Error("error")
+		return
+	}
+	for {
+		rt, err = FindF(rt.Id)
+		if err != nil {
+			t.Error(err.Error())
+			return
+		}
+		fmt.Println("xx_001->waiting result...", rt.Id)
+		if len(rt.Info) > 0 {
+			break
+		}
+		time.Sleep(time.Second)
+	}
+	fmt.Println("\n\n\n")
 	//
 	//
 	mgo.C(CN_F).RemoveAll(nil)
@@ -383,14 +411,14 @@ func TestFFCM(t *testing.T) {
 		t.Error("error")
 		return
 	}
-	total, err := SyncAllTask([]string{".mp4"}, nil)
+	total, err = SyncAllTask([]string{".mp4"})
 	if err != nil || total > 0 {
 		fmt.Println(err, total)
 		t.Error("error")
 		return
 	}
 	mgo.C("ffcm_task").Insert(bson.M{"_id": rt.Id})
-	total, err = SyncAllTask([]string{".mp4"}, nil)
+	total, err = SyncAllTask([]string{".mp4"})
 	if err != nil || total > 0 {
 		fmt.Println(err, total)
 		t.Error("error")

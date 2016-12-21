@@ -49,6 +49,8 @@ func RunGFS_S(fcfg *util.Fcfg) error {
 	if err != nil {
 		return err
 	}
+	gfsapi.CFG = fcfg
+	gfsapi.AdmHand("", routing.Shared)
 	ffcm.SRV.Hand("/adm", routing.Shared)
 	fsh.Hand("", routing.Shared)
 	routing.Shared.Print()

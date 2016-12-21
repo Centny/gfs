@@ -51,6 +51,7 @@ func init() {
 	if err != nil {
 		panic(err)
 	}
+	CFG = fcfg
 	var ts = httptest.NewMuxServer()
 	tsh, err = NewFSH2(fcfg)
 	if err != nil {
@@ -61,6 +62,7 @@ func init() {
 		hs.SetVal("uid", uid)
 		return routing.HRES_CONTINUE
 	})
+	AdmHand("", ts.Mux)
 	tsh.Hand("", ts.Mux)
 	tsh.Host = ts.URL
 	SrvAddr = func() string {
@@ -68,6 +70,7 @@ func init() {
 	}
 	turl = ts.URL
 	gfsdb.ShowLog = 1
+	ts.Mux.Print()
 }
 
 func TestUpDown(t *testing.T) {

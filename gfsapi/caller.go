@@ -68,6 +68,21 @@ func DoInfo(fid, sha, md5, mark, pub string) (util.Map, error) {
 			fid, sha, md5, mark, pub, util.S2Json(res))
 	}
 }
+func DoRedoTask(fid, sha, md5, mark, pub string) error {
+	var res, err = util.HGet2(
+		"%v/usr/api/redoTask?fid=%v&sha=%v&md5=%v&mark=%v&pub=%v&%v",
+		SrvAddr(), fid, sha, md5, mark, pub, SrvArgs())
+	if err != nil {
+		return err
+	}
+	if res.IntVal("code") == 0 {
+		return nil
+	} else {
+		return util.Err(
+			"redo file info by fid(%v),sha(%v),md5(%v),mark(%v),pub(%v) error->%v",
+			fid, sha, md5, mark, pub, util.S2Json(res))
+	}
+}
 
 func DoListInfo(fid, sha, md5, mark, pub []string) ([]util.Map, error) {
 	var res, err = util.HGet2(
@@ -179,4 +194,17 @@ func DoAddFolder(pid, name, desc string, tags []string) (util.Map, error) {
 		return res.MapVal("data"), nil
 	}
 	return nil, util.Err("add folder error->%v", util.S2Json(res))
+}
+
+func DoAdmVerify() error {
+	var res, err = util.HGet2(
+		"%v/adm/verify?%v",
+		SrvAddr(), SrvArgs())
+	if err != nil {
+		return err
+	}
+	if res.Exist("code") && res.IntVal("code") == 0 {
+		return nil
+	}
+	return util.Err("adm verify error->%v", util.S2Json(res))
 }

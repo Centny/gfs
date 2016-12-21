@@ -94,7 +94,7 @@ func FOI_F(rf *F) (int, error) {
 			}
 		}
 	}
-	go do_add_task(rf)
+	go DoAddTask(rf)
 	return 1, nil
 }
 
@@ -102,7 +102,7 @@ func do_remove(id string) error {
 	return C(CN_F).RemoveId(id)
 }
 
-func do_add_task(rf *F) error {
+func DoAddTask(rf *F) error {
 	if ffcm.SRV == nil {
 		log.W("start ffcm task fail with the server is not running")
 		return nil
@@ -437,7 +437,7 @@ func SyncTask(exts, ignore []string, limit int) (int, error) {
 	}
 	log.D("SyncTask list file by exts(%v),ignore(%v) success with %v found", exts, ignore, len(fs))
 	for _, rf := range fs {
-		err = do_add_task(rf)
+		err = DoAddTask(rf)
 		if err != nil {
 			ignore = append(ignore, rf.Id)
 		}

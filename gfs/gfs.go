@@ -2,13 +2,14 @@ package main
 
 import (
 	"fmt"
+	"os"
+	"time"
+
 	"github.com/Centny/gfs"
 	"github.com/Centny/gfs/gfsapi"
 	"github.com/Centny/gwf/log"
 	"github.com/Centny/gwf/smartio"
 	"github.com/Centny/gwf/util"
-	"os"
-	"time"
 )
 
 func usage() {
@@ -16,6 +17,7 @@ func usage() {
 	gfs -c <configure file>					run client mode by configure file
 	gfs -s <configure file>					run server on database store mode by configure file.
 	gfs -u <server address> <upload file> <mark> <other argumnets>
+	gfs -verify <configure file>					run verify all file.
 		`)
 }
 
@@ -79,6 +81,13 @@ func main() {
 		} else {
 			fmt.Println(err)
 		}
+	case "-verify":
+		var cfg = "conf/gfs_s.properties"
+		if len(os.Args) > 2 {
+			cfg = os.Args[2]
+		}
+		var fcfg_s = util.NewFcfg3()
+		fcfg_s.InitWithFilePath2(cfg, true)
 	default:
 		usage()
 		ef(1)
