@@ -1,6 +1,7 @@
 #!/bin/bash
 set -e
 export PATH=`pwd`:`dirname ${0}`:/usr/local/bin:$PATH
+echo "running ff in "`pwd`
 mkdir -p `dirname $7`
 mkdir -p `dirname $8`
 ffmpeg -progress $1 -i $2 -y $7

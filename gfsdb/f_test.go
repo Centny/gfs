@@ -2,6 +2,12 @@ package gfsdb
 
 import (
 	"fmt"
+	"os"
+	"regexp"
+	"runtime"
+	"testing"
+	"time"
+
 	"github.com/Centny/dbm/mgo"
 	"github.com/Centny/ffcm"
 	_ "github.com/Centny/gfs/test"
@@ -10,11 +16,6 @@ import (
 	"github.com/Centny/gwf/util"
 	tmgo "gopkg.in/mgo.v2"
 	"gopkg.in/mgo.v2/bson"
-	"os"
-	"regexp"
-	"runtime"
-	"testing"
-	"time"
 )
 
 func TestF(t *testing.T) {
@@ -250,6 +251,7 @@ func TestFFCM(t *testing.T) {
 	ffcm.StartTest("../gfs_s.properties", "../gfs_c.properties", dtm.MemDbc, NewFFCM_H())
 	time.Sleep(3 * time.Second)
 	fmt.Println(ffcm.SRV)
+	os.RemoveAll("tmp")
 	///
 	test_img(t)
 	var rt = &F{
@@ -277,7 +279,6 @@ func TestFFCM(t *testing.T) {
 		t.Error(err.Error())
 		return
 	}
-
 	_, err = FOI_F(&F{
 		Path: "XXXX",
 		SHA:  "abcx",
@@ -352,7 +353,7 @@ func TestFFCM(t *testing.T) {
 	os.RemoveAll("tmp")
 	fmt.Println("xxx->a")
 	ffcm.SRV.Db.Del(&dtm.Task{Id: rt.Id})
-	_, _, err = SyncTask([]string{".mp4"}, []string{"abc"}, 100)
+	_, err = SyncTask([]string{".mp4"}, []string{"abc"}, 100)
 	if err != nil {
 		t.Error(err.Error())
 		return
@@ -382,14 +383,14 @@ func TestFFCM(t *testing.T) {
 		t.Error("error")
 		return
 	}
-	total, err := SyncAllTask([]string{".mp4"})
+	total, err := SyncAllTask([]string{".mp4"}, nil)
 	if err != nil || total > 0 {
 		fmt.Println(err, total)
 		t.Error("error")
 		return
 	}
 	mgo.C("ffcm_task").Insert(bson.M{"_id": rt.Id})
-	total, err = SyncAllTask([]string{".mp4"})
+	total, err = SyncAllTask([]string{".mp4"}, nil)
 	if err != nil || total > 0 {
 		fmt.Println(err, total)
 		t.Error("error")
@@ -448,7 +449,7 @@ func TestFFCM_H_err(t *testing.T) {
 	//
 	update_exec(&F{
 		Id: "sss",
-	})
+	}, ES_ERROR)
 }
 
 func TestMapValV(t *testing.T) {

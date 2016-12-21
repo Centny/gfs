@@ -108,7 +108,7 @@ func do_add_task(rf *F) error {
 		return nil
 	}
 	var out = CreateOutPath(rf)
-	var err error = util.Err("Mock Error")
+	var err = util.Err("Mock Error")
 	if MockStartTaskErr < 1 {
 		err = ffcm.SRV.AddTaskV(rf.Id, rf.Id, rf.Path, out, filepath.Ext(rf.Path))
 	}
@@ -116,15 +116,16 @@ func do_add_task(rf *F) error {
 		log.D("FOI_F adding really file(%v) on path(%v) success with ffcm task out path(%v)", rf.Id, rf.Path, out)
 	} else if dtm.IsNotMatchedErr(err) {
 		log.D("FOI_F adding really file(%v) on path(%v) success with not ffcm task matched", rf.Id, rf.Path)
+		update_exec(rf, ES_IGNORE)
 	} else {
-		log.E("FOI_F adding really file(%v) on path(%v) success, but add ffcm task to out path(%v) error->%v, will mark it to exec error", rf.Id, rf.Path, out, err)
-		update_exec(rf)
+		log.E("FOI_F adding really file(%v) on path(%v) success, but add ffcm task to out path(%v) error->%v, will mark it to exec ignore", rf.Id, rf.Path, out, err)
+		update_exec(rf, ES_IGNORE)
 	}
 	return err
 }
 
-func update_exec(rf *F) error {
-	var err = UpdateExecF(rf.Id, ES_ERROR)
+func update_exec(rf *F, exec string) error {
+	var err = UpdateExecF(rf.Id, exec)
 	if err == nil {
 		log.D("FOI_F mark really file(%v) to exec error success", rf.Id)
 	} else {
@@ -388,7 +389,7 @@ func ListTaskIds() ([]string, error) {
 	}
 }
 
-func SyncTask(exts, ignore []string, limit int) (int, []string, error) {
+func SyncTask(exts, ignore []string, limit int) (int, error) {
 	var query = bson.M{
 		"exec": bson.M{
 			"$in": []string{ES_ERROR, ES_RUNNING},
@@ -404,11 +405,35 @@ func SyncTask(exts, ignore []string, limit int) (int, []string, error) {
 			"$nin": ignore,
 		}
 	}
+	var pipe = []bson.M{
+		bson.M{
+			"$match": query,
+		},
+		bson.M{
+			"$lookup": bson.M{
+				"from":         "ffcm_task",
+				"localField":   "_id",
+				"foreignField": "_id",
+				"as":           "task",
+			},
+		},
+		bson.M{
+			"$match": bson.M{
+				"task": bson.M{
+					"$size": 0,
+				},
+			},
+		},
+		bson.M{
+			"$limit": limit,
+		},
+	}
+	// log.D("abc->%v", util.S2Json(pipe))
 	var fs = []*F{}
-	var err = C(CN_F).Find(query).Limit(limit).All(&fs)
+	var err = C(CN_F).Pipe(pipe).All(&fs)
 	if err != nil {
 		log.E("SyncTask list file by exts(%v),ignore(%v) fail with error(%v), the query is \n%v\n", exts, ignore, err, util.S2Json(query))
-		return 0, nil, err
+		return 0, err
 	}
 	log.D("SyncTask list file by exts(%v),ignore(%v) success with %v found", exts, ignore, len(fs))
 	for _, rf := range fs {
@@ -417,18 +442,14 @@ func SyncTask(exts, ignore []string, limit int) (int, []string, error) {
 			ignore = append(ignore, rf.Id)
 		}
 	}
-	return len(fs), ignore, nil
+	return len(fs), nil
 }
 
-func SyncAllTask(exts []string) (total int, err error) {
-	var matched int = 0
-	var ignore []string
-	ignore, err = ListTaskIds()
-	if err != nil {
-		return 0, err
-	}
+func SyncAllTask(exts, ignore []string) (total int, err error) {
+	log.D("Do sync all task by exts(%v),ignore(%v)", exts, ignore)
+	var matched = 0
 	for {
-		matched, ignore, err = SyncTask(exts, ignore, 100)
+		matched, err = SyncTask(exts, ignore, 100)
 		if err != nil {
 			return
 		}

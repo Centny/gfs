@@ -10,6 +10,7 @@ const (
 	ES_RUNNING = "running"
 	ES_DONE    = "done"
 	ES_ERROR   = "error"
+	ES_IGNORE  = "ignore"
 	ES_NONE    = "none"
 )
 
