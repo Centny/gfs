@@ -37,7 +37,7 @@ func runVerify() {
 		log.W("RunVerify the supported_v is empty")
 		return
 	}
-	total, fail, err := gfsdb.VerifyVideo(CFG.Val("video_w_i"), CFG.Val("video_w_o"), strings.Split(supported, ","), nil)
+	total, fail, err := gfsdb.VerifyVideo(CFG.Val("w_dir_i"), CFG.Val("w_dir_o"), strings.Split(supported, ","), nil)
 	if err == nil {
 		log.D("RunVerify done success with total(%v),fail(%v)", total, fail)
 	} else {
