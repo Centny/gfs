@@ -21,11 +21,18 @@ func AdmVerify(hs *routing.HTTPSession) routing.HResult {
 	if !atomic.CompareAndSwapInt32(&VerifyRunning, 0, 1) {
 		return hs.MsgResE3(2, "srv-err", "having task running")
 	}
-	go runVerify()
+	var ids []string
+	var err = hs.ValidCheckVal(`
+        ids,O|S,L:0;
+    `, &ids)
+	if err != nil {
+		return hs.MsgResErr2(2, "srv-err", err)
+	}
+	go runVerify(ids)
 	return hs.MsgRes("OK")
 }
 
-func runVerify() {
+func runVerify(ids []string) {
 	defer func() {
 		err := recover()
 		if err != nil {
@@ -37,7 +44,7 @@ func runVerify() {
 		log.W("RunVerify the supported_v is empty")
 		return
 	}
-	total, fail, err := gfsdb.VerifyVideo(CFG.Val("w_dir_i"), CFG.Val("w_dir_o"), strings.Split(supported, ","), nil)
+	total, fail, err := gfsdb.VerifyVideo(CFG.Val("w_dir_i"), CFG.Val("w_dir_o"), strings.Split(supported, ","), ids, nil)
 	if err == nil {
 		log.D("RunVerify done success with total(%v),fail(%v)", total, fail)
 	} else {

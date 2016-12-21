@@ -376,14 +376,14 @@ func TestFFCM(t *testing.T) {
 	//
 	//test verify
 	fmt.Println("test verify->\n\n\n")
-	total, fail, err := VerifyVideo(".", "sdata_o", []string{".mp4"}, []string{"abc"})
+	total, fail, err := VerifyVideo(".", "sdata_o", []string{".mp4"}, nil, []string{"abc"})
 	if err != nil || total < 1 || fail > 0 {
 		fmt.Println(total, fail, err)
 		t.Error("error")
 		return
 	}
 	os.RemoveAll("sdata_o")
-	total, fail, err = VerifyVideo(".", "sdata_o", []string{".mp4"}, []string{"abc"})
+	total, fail, err = VerifyVideo(".", "sdata_o", []string{".mp4"}, nil, []string{"abc"})
 	if err != nil || total < 1 || fail < 1 {
 		fmt.Println(total, fail, err)
 		t.Error("error")

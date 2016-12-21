@@ -5,7 +5,7 @@ import "github.com/Centny/gwf/log"
 import "github.com/Centny/ffcm"
 import "path/filepath"
 
-func VerifyVideo(diri, diro string, exts, ignore []string) (total, fail int, err error) {
+func VerifyVideo(diri, diro string, exts, ids, ignore []string) (total, fail int, err error) {
 	var query = bson.M{
 		"exec": bson.M{
 			"$in": []string{ES_DONE},
@@ -26,6 +26,11 @@ func VerifyVideo(diri, diro string, exts, ignore []string) (total, fail int, err
 	if len(exts) > 0 {
 		query["ext"] = bson.M{
 			"$in": exts,
+		}
+	}
+	if len(ids) > 0 {
+		query["_id"] = bson.M{
+			"$in": ids,
 		}
 	}
 	if len(ignore) > 0 {
