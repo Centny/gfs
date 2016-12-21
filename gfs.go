@@ -1,6 +1,8 @@
 package gfs
 
 import (
+	"strings"
+
 	"github.com/Centny/dbm/mgo"
 	"github.com/Centny/ffcm"
 	"github.com/Centny/ffcm/mdb"
@@ -13,7 +15,6 @@ import (
 	"github.com/Centny/gwf/routing"
 	"github.com/Centny/gwf/routing/filter"
 	"github.com/Centny/gwf/util"
-	"strings"
 )
 
 func RunGFS_C(fcfg *util.Fcfg) error {
@@ -60,6 +61,6 @@ func RunGFS_S(fcfg *util.Fcfg) error {
 func RunSyncTask(fcfg *util.Fcfg) {
 	var exts = fcfg.Val("supported")
 	if len(exts) > 0 {
-		gfsdb.SyncAllTask(strings.Split(exts, ","))
+		gfsdb.SyncAllTask(strings.Split(exts, ","), nil)
 	}
 }
