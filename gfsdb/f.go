@@ -445,7 +445,11 @@ func SyncTask(exts, ignore []string, limit int) (int, error) {
 	return len(fs), nil
 }
 
-func SyncAllTask(exts, ignore []string) (total int, err error) {
+func SyncAllTask(exts []string) (total int, err error) {
+	return SyncAllTaskV(exts, nil)
+}
+
+func SyncAllTaskV(exts, ignore []string) (total int, err error) {
 	log.D("Do sync all task by exts(%v),ignore(%v)", exts, ignore)
 	var matched = 0
 	for {

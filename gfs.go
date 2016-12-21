@@ -61,6 +61,6 @@ func RunGFS_S(fcfg *util.Fcfg) error {
 func RunSyncTask(fcfg *util.Fcfg) {
 	var exts = fcfg.Val("supported")
 	if len(exts) > 0 {
-		gfsdb.SyncAllTask(strings.Split(exts, ","), nil)
+		gfsdb.SyncAllTask(strings.Split(exts, ","))
 	}
 }
