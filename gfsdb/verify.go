@@ -52,6 +52,10 @@ func VerifyVideo(diri, diro string, exts, ignore []string) (total, fail int, err
 		for _, rf := range fs {
 			code, err = VerifyVideoF(diri, diro, rf)
 			if err == nil {
+				err = UpdateVerifyF(rf.Id, VS_VERIFIED)
+				if err != nil {
+					return
+				}
 				continue
 			}
 			switch code {
