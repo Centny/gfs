@@ -155,7 +155,7 @@ func (f *FSH) Up(hs *routing.HTTPSession) routing.HResult {
 	if len(host) < 1 {
 		host = "http://" + hs.R.Host
 	}
-	var pub_url = fmt.Sprintf("%v/%v", host, rf.Pub)
+	var pub_url = fmt.Sprintf("%v/%v%v", host, rf.Pub, rf.EXT)
 	var args = util.Map{
 		"data":  pub_url,
 		"base":  rf,
