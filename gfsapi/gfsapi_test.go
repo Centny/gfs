@@ -1016,4 +1016,7 @@ func TestFile(t *testing.T) {
 		t.Error("error")
 		return
 	}
+	pub := file.StrVal("data")
+	fmt.Println(util.HGet("%s/mdview.html", pub))
+	fmt.Println(util.S2Json(file))
 }

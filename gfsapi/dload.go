@@ -92,7 +92,7 @@ func (f *FSH) Pub(hs *routing.HTTPSession) routing.HResult {
 	// 	fmt.Fprintf(hs.W, "the file path must be setted")
 	// 	return routing.HRES_RETURN
 	// }
-	var pub = paths[0]
+	var pub = strings.TrimSuffix(paths[0], filepath.Ext(paths[0]))
 	//
 	var rf, err = gfsdb.FindPubF(pub)
 	if err == tmgo.ErrNotFound {
@@ -131,13 +131,13 @@ func (f *FSH) Pub(hs *routing.HTTPSession) routing.HResult {
 func (f *FSH) DoSend(hs *routing.HTTPSession, rf *gfsdb.F, etype string, dl bool, idx int) routing.HResult {
 	var ttype = "Default"
 	if len(etype) > 0 {
-		if rf.Info == nil || len(rf.Info) < 1 {
-			hs.W.WriteHeader(404)
-			var msg = fmt.Sprintf("file(%v,%v) /info attribute is not exist, the type/index operator is not supported", rf.Id, rf.Pub)
-			log.E("%v", msg)
-			fmt.Fprintf(hs.W, "%v", msg)
-			return routing.HRES_RETURN
-		}
+		// if rf.Info == nil || len(rf.Info) < 1 {
+		// 	hs.W.WriteHeader(404)
+		// 	var msg = fmt.Sprintf("file(%v,%v) /info attribute is not exist, the type/index operator is not supported", rf.Id, rf.Pub)
+		// 	log.E("%v", msg)
+		// 	fmt.Fprintf(hs.W, "%v", msg)
+		// 	return routing.HRES_RETURN
+		// }
 		ttype = etype
 	}
 	var sender, ok = f.SenderL[ttype]

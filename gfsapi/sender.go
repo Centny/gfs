@@ -1,15 +1,19 @@
 package gfsapi
 
 import (
+	"bytes"
 	"fmt"
+	"net/http"
+	"net/url"
+	"strings"
+
 	"github.com/Centny/gfs/gfsdb"
 	"github.com/Centny/gwf/log"
 	"github.com/Centny/gwf/routing"
 	"github.com/Centny/gwf/util"
-	"net/http"
-	"net/url"
-	"strings"
 )
+
+var MarkdownCmd = "pandoc --highlight-style tango -s"
 
 type FSedner interface {
 	String() string
@@ -59,6 +63,13 @@ func NewTextSender(sender *DefaultSender) *TextSender {
 	return &TextSender{DefaultSender: sender}
 }
 func (t *TextSender) Send(hs *routing.HTTPSession, rf *gfsdb.F, etype string, dl bool, idx int) routing.HResult {
+	if rf.Info == nil || len(rf.Info) < 1 {
+		hs.W.WriteHeader(404)
+		var msg = fmt.Sprintf("file(%v,%v) /info attribute is not exist, the type/index operator is not supported", rf.Id, rf.Pub)
+		log.E("%v", msg)
+		fmt.Fprintf(hs.W, "%v", msg)
+		return routing.HRES_RETURN
+	}
 	var eval = rf.Info.MapVal(etype)
 	if eval == nil {
 		hs.W.WriteHeader(404)
@@ -92,6 +103,13 @@ func NewJsonSender(sender *DefaultSender) *JsonSender {
 	return &JsonSender{DefaultSender: sender}
 }
 func (t *JsonSender) Send(hs *routing.HTTPSession, rf *gfsdb.F, etype string, dl bool, idx int) routing.HResult {
+	if rf.Info == nil || len(rf.Info) < 1 {
+		hs.W.WriteHeader(404)
+		var msg = fmt.Sprintf("file(%v,%v) /info attribute is not exist, the type/index operator is not supported", rf.Id, rf.Pub)
+		log.E("%v", msg)
+		fmt.Fprintf(hs.W, "%v", msg)
+		return routing.HRES_RETURN
+	}
 	var eval = rf.Info.MapVal(etype)
 	if eval == nil {
 		hs.W.WriteHeader(404)
@@ -116,6 +134,49 @@ func (t *JsonSender) String() string {
 	return "JsonSender"
 }
 
+type MarkdownSender struct {
+	Base      string
+	Supported map[string]int
+}
+
+func NewMarkdownSender(base, supported string) *MarkdownSender {
+	sm := map[string]int{}
+	for _, s := range strings.Split(supported, ",") {
+		sm[s] = 1
+	}
+	return &MarkdownSender{Base: base, Supported: sm}
+}
+
+func (m *MarkdownSender) Send(hs *routing.HTTPSession, rf *gfsdb.F, etype string, dl bool, idx int) routing.HResult {
+	hs.W.Header().Set("Content-Type", "text/html;charset=utf8")
+	if m.Supported[rf.EXT] < 1 {
+		hs.W.WriteHeader(404)
+		var msg = fmt.Sprintf("markdown is not supported by ext(%s) on file(%s)", rf.Exec, rf.Id)
+		log.E("%v", msg)
+		fmt.Fprintf(hs.W, "%v", msg)
+		return routing.HRES_RETURN
+	}
+	var markdown = fmt.Sprintf("%s %s/%s", MarkdownCmd, m.Base, rf.Path)
+	var errBuf = bytes.NewBuffer(nil)
+	var cmd = util.NewCmd(markdown)
+	cmd.Stdout = hs.W
+	cmd.Stderr = errBuf
+	err := cmd.Start()
+	if err != nil {
+		log.E("MarkdownSender start command(%v) fail with err(%v)", markdown, err)
+		return hs.Printf("%v", err)
+	}
+	err = cmd.Wait()
+	if err != nil {
+		log.E("MarkdownSender wait command fail with err(%v)->\n%v", err, errBuf.String())
+		return hs.Printf("%v", err)
+	}
+	return routing.HRES_RETURN
+}
+func (m *MarkdownSender) String() string {
+	return "MarkdownSender"
+}
+
 func ParseSenderL(cfg *util.Fcfg, sender_l []string) (map[string]FSedner, error) {
 	var ts FSedner
 	var ss = map[string]FSedner{}
@@ -134,6 +195,8 @@ func ParseSenderL(cfg *util.Fcfg, sender_l []string) (map[string]FSedner, error)
 			ts = NewTextSender(NewDefaultSender2(dir, pref))
 		case "default":
 			ts = NewDefaultSender2(dir, pref)
+		case "markdown":
+			ts = NewMarkdownSender(dir, cfg.Val2(sender+"/s_supported", ""))
 		default:
 			return nil, util.Err("not support type(%v) found on %v/s_type", sender)
 		}
