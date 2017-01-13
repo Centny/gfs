@@ -184,11 +184,10 @@ func (m *MarkdownSender) Send(hs *routing.HTTPSession, rf *gfsdb.F, etype string
 		return hs.Printf("%v", err)
 	}
 	_, err = fmt.Fprintf(writer, `
-#### %v
 %v%v
 %v
 %v
-	`, rf.Name, "```", rf.EXT, string(dataBuf), "```")
+	`, "```", rf.EXT, string(dataBuf), "```")
 	if err != nil {
 		writer.Close()
 		log.E("MarkdownSender send data to command(%v) fail with err(%v)", markdown, err)
