@@ -7,6 +7,8 @@ import (
 	"net/url"
 	"strings"
 
+	"io/ioutil"
+
 	"github.com/Centny/gfs/gfsdb"
 	"github.com/Centny/gwf/log"
 	"github.com/Centny/gwf/routing"
@@ -159,16 +161,40 @@ func (m *MarkdownSender) Send(hs *routing.HTTPSession, rf *gfsdb.F, etype string
 		fmt.Fprintf(hs.W, "%v", msg)
 		return routing.HRES_RETURN
 	}
-	var markdown = fmt.Sprintf("%s %s/%s", m.MarkdownCmd, m.Base, rf.Path)
+	tf := fmt.Sprintf("%s/%s", m.Base, rf.Path)
+	dataBuf, err := ioutil.ReadFile(tf)
+	if err != nil {
+		log.E("MarkdownSender read source file(%s) fail with err(%v)", tf, err)
+		return hs.Printf("%v", err)
+	}
+	var markdown = m.MarkdownCmd
 	var errBuf = bytes.NewBuffer(nil)
 	var cmd = util.NewCmd(markdown)
 	cmd.Stdout = hs.W
 	cmd.Stderr = errBuf
-	err := cmd.Start()
+	writer, err := cmd.StdinPipe()
 	if err != nil {
+		log.E("MarkdownSender open command(%v) stdin pipe fail with err(%v)", markdown, err)
+		return hs.Printf("%v", err)
+	}
+	err = cmd.Start()
+	if err != nil {
+		writer.Close()
 		log.E("MarkdownSender start command(%v) fail with err(%v)", markdown, err)
 		return hs.Printf("%v", err)
 	}
+	_, err = fmt.Fprintf(writer, `
+#### %v
+%v%v
+%v
+%v
+	`, rf.Name, "```", rf.EXT, string(dataBuf), "```")
+	if err != nil {
+		writer.Close()
+		log.E("MarkdownSender send data to command(%v) fail with err(%v)", markdown, err)
+		return hs.Printf("%v", err)
+	}
+	writer.Close()
 	err = cmd.Wait()
 	if err != nil {
 		log.E("MarkdownSender wait command fail with err(%v)->\n%v", err, errBuf.String())
