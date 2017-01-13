@@ -13,8 +13,6 @@ import (
 	"github.com/Centny/gwf/util"
 )
 
-var MarkdownCmd = "pandoc --highlight-style tango -s"
-
 type FSedner interface {
 	String() string
 	Send(hs *routing.HTTPSession, rf *gfsdb.F, etype string, dl bool, idx int) routing.HResult
@@ -135,16 +133,21 @@ func (t *JsonSender) String() string {
 }
 
 type MarkdownSender struct {
-	Base      string
-	Supported map[string]int
+	Base        string
+	Supported   map[string]int
+	MarkdownCmd string
 }
 
-func NewMarkdownSender(base, supported string) *MarkdownSender {
+func NewMarkdownSender(base, supported, mardkwon string) *MarkdownSender {
 	sm := map[string]int{}
 	for _, s := range strings.Split(supported, ",") {
 		sm[s] = 1
 	}
-	return &MarkdownSender{Base: base, Supported: sm}
+	return &MarkdownSender{
+		Base:        base,
+		Supported:   sm,
+		MarkdownCmd: mardkwon,
+	}
 }
 
 func (m *MarkdownSender) Send(hs *routing.HTTPSession, rf *gfsdb.F, etype string, dl bool, idx int) routing.HResult {
@@ -156,7 +159,7 @@ func (m *MarkdownSender) Send(hs *routing.HTTPSession, rf *gfsdb.F, etype string
 		fmt.Fprintf(hs.W, "%v", msg)
 		return routing.HRES_RETURN
 	}
-	var markdown = fmt.Sprintf("%s %s/%s", MarkdownCmd, m.Base, rf.Path)
+	var markdown = fmt.Sprintf("%s %s/%s", m.MarkdownCmd, m.Base, rf.Path)
 	var errBuf = bytes.NewBuffer(nil)
 	var cmd = util.NewCmd(markdown)
 	cmd.Stdout = hs.W
@@ -196,7 +199,10 @@ func ParseSenderL(cfg *util.Fcfg, sender_l []string) (map[string]FSedner, error)
 		case "default":
 			ts = NewDefaultSender2(dir, pref)
 		case "markdown":
-			ts = NewMarkdownSender(dir, cfg.Val2(sender+"/s_supported", ""))
+			ts = NewMarkdownSender(dir,
+				cfg.Val2(sender+"/s_supported", ""),
+				cfg.Val2(sender+"/s_cmds", "pandoc --highlight-style tango -s"),
+			)
 		default:
 			return nil, util.Err("not support type(%v) found on %v/s_type", sender)
 		}
