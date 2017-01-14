@@ -206,14 +206,18 @@ func (f *FSH) do_file(hs *routing.HTTPSession, rf *gfsdb.F, name string) error {
 		}
 		return spath
 	}, f.Mode)
-	if err == nil {
-		rf.SHA, rf.MD5, rf.Size, rf.Name = sha_, md5_, size, name
-		if len(rf.Name) < 1 {
-			rf.Name = rf.Filename
-		}
-	} else {
+	if err != nil {
 		err = util.Err("FSH upload receive file by key(%v) error->%v", f.Key, err)
 		log.E("%v", err)
+		return err
+	}
+	if size < 8 {
+		err = util.Err("FSH upload receive file by key(%v),size(%v) error->%v", f.Key, size, "too small")
+		return err
+	}
+	rf.SHA, rf.MD5, rf.Size, rf.Name = sha_, md5_, size, name
+	if len(rf.Name) < 1 {
+		rf.Name = rf.Filename
 	}
 	return err
 }
@@ -237,13 +241,16 @@ func (f *FSH) do_base64(hs *routing.HTTPSession, rf *gfsdb.F, name string) error
 	var spath = f.Base.AbsPath(hs, rf.Path)
 	var reader = base64.NewDecoder(base64.StdEncoding, hs.R.Body)
 	size_, sha_, md5_, err := util.Copyp4(spath, reader, f.Mode)
-	if err == nil {
-		rf.SHA, rf.MD5, rf.Size = sha_, md5_, size_
-		rf.Filename, rf.Name = name, name
-		rf.EXT = filepath.Ext(name)
-	} else {
+	if err != nil {
 		err = util.Err("FSH do base64 fail with write data to path(%v) error->%v", spath, err)
 		log.E("%v", err)
 	}
+	if size_ < 8 {
+		err = util.Err("FSH upload receive file by key(%v),size(%v) error->%v", f.Key, size_, "too small")
+		return err
+	}
+	rf.SHA, rf.MD5, rf.Size = sha_, md5_, size_
+	rf.Filename, rf.Name = name, name
+	rf.EXT = filepath.Ext(name)
 	return err
 }
