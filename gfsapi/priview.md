@@ -30,7 +30,11 @@ note: all supported command is in `Supported` section
 ### Suppored
 all supporeted command is mapping by file extendsion
 
-* `.doc,.docx` -> `D_docx`
-* `.ppt,.pptx` -> `D_pptx`
-* `.pdf` -> `D_pdfx`
+* `.doc,.docx,.doc,.docx,.xps,.rtf` -> `D_docx`   --Convert Needed
+* `.ppt,.pptx` -> `D_pptx`  --Convert Needed
+* `.pdf` -> `D_pdfx` --Convert Needed
 * `.go,.h,.hpp,.c,.cpp,.java,.js,.cs,.m,.sh,.swift,.xml,.properties,.ini,.html,.json,.sql,.txt` -> `mdview`
+* `.wmv,.rm,.rmvb,.mpg,.mpeg,.mpe,.3gp,.mov,.mp4,.m4v,.avi,.mkv,.flv,.vob` ->`V_pc`(PC) ->`V_phone`(phone) --Convert Needed
+* `.jpg,.jpeg,.png,.bmp` ->`small`
+* `.amr` -> `smp3`
+* `.flac,.wav` -> `mp3` --Convert Needed
