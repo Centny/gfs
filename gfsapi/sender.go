@@ -45,8 +45,12 @@ func (d *DefaultSender) Send(hs *routing.HTTPSession, rf *gfsdb.F, etype string,
 }
 func (d *DefaultSender) DoH(hs *routing.HTTPSession, rf *gfsdb.F, etype string, dl bool, idx int) routing.HResult {
 	if dl {
+		var filename = hs.CheckValA("filename")
+		if len(filename) < 1 {
+			filename = rf.Name
+		}
 		var header = hs.W.Header()
-		header.Set("Content-Disposition", fmt.Sprintf("attachment; filename=%s", url.QueryEscape(rf.Name)))
+		header.Set("Content-Disposition", fmt.Sprintf("attachment; filename=%s", url.QueryEscape(filename)))
 	}
 	slog("DefaultSender do normal http file server(%v) to %v", d.FH, hs.R.URL.Path)
 	d.FH.ServeHTTP(hs.W, hs.R)
