@@ -6,12 +6,11 @@ import (
 	"net/http"
 	"net/url"
 	"strings"
+	"time"
 
 	"html/template"
 
 	"os/exec"
-
-	"time"
 
 	"github.com/Centny/gfs/gfsdb"
 	"github.com/Centny/gwf/log"
@@ -185,18 +184,33 @@ func (m *MarkdownSender) errwrite(hs *routing.HTTPSession, msg interface{}) rout
 func (m *MarkdownSender) TimeoutLoop() {
 	m.Running = true
 	for m.Running {
-		m.rlck.RLock()
-		now := util.Now()
-		for cmd, start := range m.rcmds {
-			if now-start < m.Timeout {
-				continue
-			}
-			if cmd.Process != nil {
-				cmd.Process.Kill()
-			}
-		}
-		m.rlck.RUnlock()
+		m.dotimeout()
 		time.Sleep(time.Duration(m.Delay) * time.Millisecond)
+	}
+}
+
+func (m *MarkdownSender) dotimeout() {
+	defer func() {
+		err := recover()
+		if err != nil {
+			log.E("MarkdownSender do timeout panic(%v)->\n%v", util.CallStatck())
+		}
+	}()
+	tc := 0
+	m.rlck.RLock()
+	now := util.Now()
+	for cmd, start := range m.rcmds {
+		if now-start < m.Timeout {
+			continue
+		}
+		tc++
+		if cmd.Process != nil {
+			cmd.Process.Kill()
+		}
+	}
+	m.rlck.RUnlock()
+	if tc > 0 {
+		log.D("MarkdownSender found %v timeout command", tc)
 	}
 }
 
@@ -300,6 +314,7 @@ func ParseSenderL(cfg *util.Fcfg, sender_l []string) (map[string]FSedner, error)
 				mts.ParseErrf(errf)
 			}
 			ts = mts
+			go mts.TimeoutLoop()
 		default:
 			return nil, util.Err("not support type(%v) found on %v/s_type", sender)
 		}
