@@ -976,6 +976,9 @@ func TestFile(t *testing.T) {
 	//test mdview
 	testMdview(t, "hand.go")
 	//
+	//test mdview
+	testMdview(t, "swiper.min.js")
+	//
 	//test mdview not supported
 	testMdview(t, "priview.md")
 }
@@ -1047,4 +1050,21 @@ func testMdview(t *testing.T, filename string) {
 	pub := file.StrVal("data")
 	fmt.Println(util.HGet("%s/mdview.html", pub))
 	fmt.Println(util.S2Json(file))
+}
+
+func TestMarkdownTimeout(t *testing.T) {
+	mdv := NewMarkdownSender(".", "ss", "sleep 3")
+	mdv.Timeout = 2000
+	go func() {
+		var cmd = util.NewCmd("sleep 100")
+		cmd.Start()
+		mdv.rcmds[cmd] = util.Now()
+		err := cmd.Wait()
+		if err == nil {
+			t.Error(err)
+		}
+		fmt.Println(err)
+		mdv.Running = false
+	}()
+	mdv.TimeoutLoop()
 }

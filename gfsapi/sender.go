@@ -9,11 +9,16 @@ import (
 
 	"html/template"
 
+	"os/exec"
+
+	"time"
+
 	"github.com/Centny/gfs/gfsdb"
 	"github.com/Centny/gwf/log"
 	"github.com/Centny/gwf/routing"
 	"github.com/Centny/gwf/util"
 	"github.com/Centny/iconv/auto"
+	"github.com/anacrolix/sync"
 )
 
 type FSedner interface {
@@ -144,6 +149,11 @@ type MarkdownSender struct {
 	Supported   map[string]int
 	MarkdownCmd string
 	Errf        *template.Template
+	Delay       int64
+	Timeout     int64
+	Running     bool
+	rcmds       map[*exec.Cmd]int64
+	rlck        sync.RWMutex
 }
 
 func NewMarkdownSender(base, supported, mardkwon string) *MarkdownSender {
@@ -155,6 +165,9 @@ func NewMarkdownSender(base, supported, mardkwon string) *MarkdownSender {
 		Base:        base,
 		Supported:   sm,
 		MarkdownCmd: mardkwon,
+		rcmds:       map[*exec.Cmd]int64{},
+		Delay:       1000,
+		Timeout:     5000,
 	}
 }
 
@@ -167,6 +180,24 @@ func (m *MarkdownSender) errwrite(hs *routing.HTTPSession, msg interface{}) rout
 		fmt.Fprintf(hs.W, "%v", msg)
 	}
 	return routing.HRES_RETURN
+}
+
+func (m *MarkdownSender) TimeoutLoop() {
+	m.Running = true
+	for m.Running {
+		m.rlck.RLock()
+		now := util.Now()
+		for cmd, start := range m.rcmds {
+			if now-start < m.Timeout {
+				continue
+			}
+			if cmd.Process != nil {
+				cmd.Process.Kill()
+			}
+		}
+		m.rlck.RUnlock()
+		time.Sleep(time.Duration(m.Delay) * time.Millisecond)
+	}
 }
 
 func (m *MarkdownSender) Send(hs *routing.HTTPSession, rf *gfsdb.F, etype string, dl bool, idx int) routing.HResult {
@@ -210,13 +241,20 @@ func (m *MarkdownSender) Send(hs *routing.HTTPSession, rf *gfsdb.F, etype string
 		return m.errwrite(hs, err.Error())
 	}
 	writer.Close()
+	m.rlck.Lock()
+	m.rcmds[cmd] = util.Now()
+	m.rlck.Unlock()
 	err = cmd.Wait()
+	m.rlck.Lock()
+	delete(m.rcmds, cmd)
+	m.rlck.Unlock()
 	if err != nil {
 		log.E("MarkdownSender wait command fail with err(%v)->\n%v", err, errBuf.String())
 		return m.errwrite(hs, err.Error())
 	}
 	return routing.HRES_RETURN
 }
+
 func (m *MarkdownSender) String() string {
 	return "MarkdownSender"
 }
@@ -255,6 +293,8 @@ func ParseSenderL(cfg *util.Fcfg, sender_l []string) (map[string]FSedner, error)
 				cfg.Val2(sender+"/s_supported", ""),
 				cfg.Val2(sender+"/s_cmds", "pandoc --highlight-style tango -s"),
 			)
+			mts.Delay = cfg.Int64ValV(sender+"/s_delay", 1000)
+			mts.Timeout = cfg.Int64ValV(sender+"/s_timeout", 5000)
 			errf := cfg.Val2(sender+"/s_errf", "")
 			if len(errf) > 0 {
 				mts.ParseErrf(errf)
