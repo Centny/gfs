@@ -7,12 +7,13 @@ import (
 	"net/url"
 	"strings"
 
-	"io/ioutil"
+	"html/template"
 
 	"github.com/Centny/gfs/gfsdb"
 	"github.com/Centny/gwf/log"
 	"github.com/Centny/gwf/routing"
 	"github.com/Centny/gwf/util"
+	"github.com/Centny/iconv/auto"
 )
 
 type FSedner interface {
@@ -138,6 +139,7 @@ type MarkdownSender struct {
 	Base        string
 	Supported   map[string]int
 	MarkdownCmd string
+	Errf        *template.Template
 }
 
 func NewMarkdownSender(base, supported, mardkwon string) *MarkdownSender {
@@ -152,20 +154,30 @@ func NewMarkdownSender(base, supported, mardkwon string) *MarkdownSender {
 	}
 }
 
+func (m *MarkdownSender) errwrite(hs *routing.HTTPSession, msg interface{}) routing.HResult {
+	if m.Errf != nil {
+		m.Errf.Execute(hs.W, util.Map{
+			"err": msg,
+		})
+	} else {
+		fmt.Fprintf(hs.W, "%v", msg)
+	}
+	return routing.HRES_RETURN
+}
+
 func (m *MarkdownSender) Send(hs *routing.HTTPSession, rf *gfsdb.F, etype string, dl bool, idx int) routing.HResult {
 	hs.W.Header().Set("Content-Type", "text/html;charset=utf8")
 	if m.Supported[rf.EXT] < 1 {
 		hs.W.WriteHeader(404)
 		var msg = fmt.Sprintf("markdown is not supported by ext(%s) on file(%s)", rf.EXT, rf.Id)
 		log.E("%v", msg)
-		fmt.Fprintf(hs.W, "%v", msg)
-		return routing.HRES_RETURN
+		return m.errwrite(hs, msg)
 	}
 	tf := fmt.Sprintf("%s/%s", m.Base, rf.Path)
-	dataBuf, err := ioutil.ReadFile(tf)
+	dataBuf, err := auto.ReadFileAsUtf8(tf)
 	if err != nil {
 		log.E("MarkdownSender read source file(%s) fail with err(%v)", tf, err)
-		return hs.Printf("%v", err)
+		return m.errwrite(hs, err.Error())
 	}
 	var markdown = m.MarkdownCmd
 	var errBuf = bytes.NewBuffer(nil)
@@ -175,13 +187,13 @@ func (m *MarkdownSender) Send(hs *routing.HTTPSession, rf *gfsdb.F, etype string
 	writer, err := cmd.StdinPipe()
 	if err != nil {
 		log.E("MarkdownSender open command(%v) stdin pipe fail with err(%v)", markdown, err)
-		return hs.Printf("%v", err)
+		return m.errwrite(hs, err.Error())
 	}
 	err = cmd.Start()
 	if err != nil {
 		writer.Close()
 		log.E("MarkdownSender start command(%v) fail with err(%v)", markdown, err)
-		return hs.Printf("%v", err)
+		return m.errwrite(hs, err.Error())
 	}
 	_, err = fmt.Fprintf(writer, `
 %v%v
@@ -191,18 +203,29 @@ func (m *MarkdownSender) Send(hs *routing.HTTPSession, rf *gfsdb.F, etype string
 	if err != nil {
 		writer.Close()
 		log.E("MarkdownSender send data to command(%v) fail with err(%v)", markdown, err)
-		return hs.Printf("%v", err)
+		return m.errwrite(hs, err.Error())
 	}
 	writer.Close()
 	err = cmd.Wait()
 	if err != nil {
 		log.E("MarkdownSender wait command fail with err(%v)->\n%v", err, errBuf.String())
-		return hs.Printf("%v", err)
+		return m.errwrite(hs, err.Error())
 	}
 	return routing.HRES_RETURN
 }
 func (m *MarkdownSender) String() string {
 	return "MarkdownSender"
+}
+
+func (m *MarkdownSender) ParseErrf(errf string) error {
+	tmpl, err := template.ParseFiles(errf)
+	if err != nil {
+		log.E("MarkdownSender parsing errf by path(%v) fail with %v", errf, err)
+		return err
+	}
+	m.Errf = tmpl
+	log.I("MarkdownSender parsing errf by path(%v) success", errf)
+	return nil
 }
 
 func ParseSenderL(cfg *util.Fcfg, sender_l []string) (map[string]FSedner, error) {
@@ -224,10 +247,15 @@ func ParseSenderL(cfg *util.Fcfg, sender_l []string) (map[string]FSedner, error)
 		case "default":
 			ts = NewDefaultSender2(dir, pref)
 		case "markdown":
-			ts = NewMarkdownSender(dir,
+			mts := NewMarkdownSender(dir,
 				cfg.Val2(sender+"/s_supported", ""),
 				cfg.Val2(sender+"/s_cmds", "pandoc --highlight-style tango -s"),
 			)
+			errf := cfg.Val2(sender+"/s_errf", "")
+			if len(errf) > 0 {
+				mts.ParseErrf(errf)
+			}
+			ts = mts
 		default:
 			return nil, util.Err("not support type(%v) found on %v/s_type", sender)
 		}

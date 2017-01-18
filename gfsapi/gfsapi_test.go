@@ -970,7 +970,21 @@ func TestFile(t *testing.T) {
 	}
 	//
 	//test upload file to sub folder
-	file, err = DoUpF("file.go", "", "", "x,y,z", folderID, "desc", 1, 1)
+	testSubFolder(t, "hand.go", folderID, subFolderID)
+
+	//
+	//test mdview
+	testMdview(t, "hand.go")
+	//
+	//test mdview not supported
+	testMdview(t, "priview.md")
+}
+
+func testSubFolder(t *testing.T, filename, folderID, subFolderID string) {
+	//
+	//test upload file to sub folder
+	fmt.Printf("\n\n\n\n\n")
+	file, err := DoUpF(filename, "", "", "x,y,z", folderID, "desc", 1, 1)
 	if err != nil {
 		t.Error(err.Error())
 		return
@@ -980,13 +994,13 @@ func TestFile(t *testing.T) {
 		t.Error("error")
 		return
 	}
-	fid = file.StrValP("/file/id")
+	fid := file.StrValP("/file/id")
 	if len(fid) < 1 {
 		fmt.Println(util.S2Json(file))
 		t.Error("error")
 		return
 	}
-	res, err = DoListFile("", gfsdb.FT_FOLDER, []string{folderID}, nil, nil, 0, 1, 100, 1) //check folder
+	res, err := DoListFile("", gfsdb.FT_FOLDER, []string{folderID}, nil, nil, 0, 1, 100, 1) //check folder
 	if err != nil {
 		t.Error(err.Error())
 		return
@@ -1014,6 +1028,20 @@ func TestFile(t *testing.T) {
 	if len(res.AryMapVal("files")) != 2 || len(res.MapVal("bases")) != 1 {
 		fmt.Println(util.S2Json(res))
 		t.Error("error")
+		return
+	}
+	pub := file.StrVal("data")
+	fmt.Println(util.HGet("%s/mdview.html", pub))
+	fmt.Println(util.S2Json(file))
+}
+
+func testMdview(t *testing.T, filename string) {
+	//
+	//test upload file to sub folder
+	fmt.Printf("\n\n\n\n\n")
+	file, err := DoUpF(filename, "", "", "x,y,z", "", "desc", 1, 1)
+	if err != nil {
+		t.Error(err.Error())
 		return
 	}
 	pub := file.StrVal("data")
