@@ -156,7 +156,7 @@ func (m *MarkdownSender) Send(hs *routing.HTTPSession, rf *gfsdb.F, etype string
 	hs.W.Header().Set("Content-Type", "text/html;charset=utf8")
 	if m.Supported[rf.EXT] < 1 {
 		hs.W.WriteHeader(404)
-		var msg = fmt.Sprintf("markdown is not supported by ext(%s) on file(%s)", rf.Exec, rf.Id)
+		var msg = fmt.Sprintf("markdown is not supported by ext(%s) on file(%s)", rf.EXT, rf.Id)
 		log.E("%v", msg)
 		fmt.Fprintf(hs.W, "%v", msg)
 		return routing.HRES_RETURN
