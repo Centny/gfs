@@ -75,6 +75,26 @@ func UpdateFile(file *File) error {
 	return C(CN_FILE).Update(bson.M{"_id": file.Id}, bson.M{"$set": update})
 }
 
+func UpdateFileParent(fids []string, pid string) error {
+	if pid == "ROOT" {
+		pid = ""
+	}
+	_, err := C(CN_FILE).UpdateAll(
+		bson.M{
+			"_id": bson.M{
+				"$in": fids,
+			},
+		},
+		bson.M{
+			"$set": bson.M{
+				"pid":  pid,
+				"time": util.Now(),
+			},
+		},
+	)
+	return err
+}
+
 func RemoveFile(id ...string) (removed int, err error) {
 	var changed *mgo.ChangeInfo
 	changed, err = C(CN_FILE).RemoveAll(bson.M{"_id": bson.M{"$in": id}})

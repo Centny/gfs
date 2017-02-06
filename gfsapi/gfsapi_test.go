@@ -841,6 +841,7 @@ func TestFile(t *testing.T) {
 		t.Error(err)
 		return
 	}
+
 	res, err = DoListFile("", gfsdb.FT_FOLDER, nil, nil, nil, 0, 1, 100, 1)
 	if err != nil {
 		t.Error(err.Error())
@@ -981,6 +982,23 @@ func TestFile(t *testing.T) {
 	//
 	//test mdview not supported
 	testMdview(t, "priview.md")
+
+	//
+	//test update file parent
+	sub2, err := DoAddFolder(subFolderID, "xx2", "ssss", nil)
+	if err != nil {
+		t.Error("error")
+		return
+	}
+	if sub2.StrValP("/folder/pid") != subFolderID {
+		t.Error("error")
+		return
+	}
+	err = DoUpdateFileParent([]string{sub2.StrValP("/folder/id")}, folderID)
+	if err != nil {
+		t.Error(err)
+		return
+	}
 }
 
 func testSubFolder(t *testing.T, filename, folderID, subFolderID string) {

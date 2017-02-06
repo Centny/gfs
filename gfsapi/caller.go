@@ -170,6 +170,19 @@ func DoUpdateFile(fid, name, desc string, tags []string) error {
 	return util.Err("list file error->%v", util.S2Json(res))
 }
 
+func DoUpdateFileParent(fids []string, pid string) error {
+	var res, err = util.HGet2(
+		"%v/usr/api/updateFileParent?fids=%v&pid=%v&%v",
+		SrvAddr(), strings.Join(fids, ","), pid, SrvArgs())
+	if err != nil {
+		return err
+	}
+	if res.IntVal("code") == 0 {
+		return nil
+	}
+	return util.Err("list file error->%v", util.S2Json(res))
+}
+
 func DoRemoveFile(fid string) (int, error) {
 	var res, err = util.HGet2(
 		"%v/usr/api/removeFile?fid=%v&%v",

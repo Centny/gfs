@@ -196,6 +196,57 @@ func UpdateFile(hs *routing.HTTPSession) routing.HResult {
 	return hs.MsgRes("OK")
 }
 
+//UpdateFileParent update user file or folder parent
+//Update user file or foild by id
+//
+//@url,normal http get request
+//	~/usr/api/updateFile?fid=xx		GET
+//@arg,the normal query arguments
+//	fids	R	the file/folder id, seperate by comma
+//	pid		O	the file/folder parent id, using ROOT to move file/folder to root
+/*
+	//update file/folder parent
+	~/usr/api/updateFileParent?fids=xx&pid=aaa
+*/
+//@ret,code/data return
+//	code	I	the common code.
+/*	the example
+	{
+	    "code": 0,
+	    "data": "OK"
+	}
+*/
+//@tag,file,info,update
+//@author,cny,2017-02-06
+//@case,File System
+func UpdateFileParent(hs *routing.HTTPSession) routing.HResult {
+	var fids []string
+	var pid string
+	var err = hs.ValidCheckVal(`
+		fids,R|S,L:0;
+		pid,O|S,L:0;
+		`, &fids, &pid)
+	if err != nil {
+		return hs.MsgResErr2(1, "arg-err", err)
+	}
+	if len(pid) > 0 && pid != "ROOT" {
+		parent, err := gfsdb.FindFile(pid)
+		if err != nil {
+			return hs.MsgResErr2(2, "srv-err", err)
+		}
+		if parent.Oid != hs.StrVal("uid") || parent.Owner != OWN_USR {
+			err = util.Err("the parent is not your")
+			log.W("UpdateFile having user(%v) update not him file(%v),pid(%v)", hs.StrVal("uid"), fids, pid)
+			return hs.MsgResErr2(3, "srv-err", err)
+		}
+	}
+	err = gfsdb.UpdateFileParent(fids, pid)
+	if err != nil {
+		return hs.MsgResErr2(2, "srv-err", err)
+	}
+	return hs.MsgRes("OK")
+}
+
 //RemoveFile remove user file or folder
 //Remove user file or foild by id
 //
