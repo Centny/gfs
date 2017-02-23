@@ -84,7 +84,7 @@ func RedoTask(hs *routing.HTTPSession) routing.HResult {
 	if file.Exec == gfsdb.ES_RUNNING {
 		return hs.MsgResE3(3, "arg-err", "the file exec is running")
 	}
-	err = gfsdb.DoAddTask(file)
+	_, err = gfsdb.DoAddTask(file)
 	if err == nil {
 		return hs.MsgRes("OK")
 	}
