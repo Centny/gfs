@@ -78,7 +78,7 @@ func VerifyVideo(diri, diro string, exts, ids, ignore []string) (total, fail int
 				if err != nil {
 					return
 				}
-				err = DoAddTask(rf)
+				_, err = DoAddTask(rf)
 				if err != nil {
 					return
 				}

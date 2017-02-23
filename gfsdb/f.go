@@ -59,6 +59,10 @@ func FOI_F(rf *F) (int, error) {
 		log.D("FOI_F adding really file(%v) on path(%v) success with ffcm server is not running", rf.Id, rf.Path)
 		return 1, nil
 	}
+	return DoAddTask(rf)
+}
+
+func DoAddTask(rf *F) (int, error) {
 	if ffcm.SRV.MatchLocArgsV(rf.Id, rf.Id, rf.Path, "", filepath.Ext(rf.Path)) {
 		log.D("FOI_F adding really file(%v) on path(%v) by doing local task", rf.Id, rf.Path)
 		var out = CreateOutPath(rf)
@@ -94,7 +98,7 @@ func FOI_F(rf *F) (int, error) {
 			}
 		}
 	}
-	go DoAddTask(rf)
+	go DoAddTaskRemote(rf)
 	return 1, nil
 }
 
@@ -102,7 +106,7 @@ func do_remove(id string) error {
 	return C(CN_F).RemoveId(id)
 }
 
-func DoAddTask(rf *F) error {
+func DoAddTaskRemote(rf *F) error {
 	if ffcm.SRV == nil {
 		log.W("start ffcm task fail with the server is not running")
 		return nil
@@ -116,7 +120,7 @@ func DoAddTask(rf *F) error {
 		log.D("FOI_F adding really file(%v) on path(%v) success with ffcm task out path(%v)", rf.Id, rf.Path, out)
 	} else if dtm.IsNotMatchedErr(err) {
 		log.D("FOI_F adding really file(%v) on path(%v) success with not ffcm task matched", rf.Id, rf.Path)
-		update_exec(rf, ES_IGNORE)
+		update_exec(rf, ES_NONE)
 	} else {
 		log.E("FOI_F adding really file(%v) on path(%v) success, but add ffcm task to out path(%v) error->%v, will mark it to exec ignore", rf.Id, rf.Path, out, err)
 		update_exec(rf, ES_IGNORE)
@@ -447,7 +451,7 @@ func SyncTask(exts, ignore []string, limit int) (int, error) {
 	}
 	log.D("SyncTask list file by exts(%v),ignore(%v) success with %v found", exts, ignore, len(fs))
 	for _, rf := range fs {
-		err = DoAddTask(rf)
+		_, err = DoAddTask(rf)
 		if err != nil {
 			ignore = append(ignore, rf.Id)
 		}
