@@ -23,6 +23,7 @@ func FOI_File(file *File) (int, error) {
 			"fid":   file.Fid,
 			"oid":   file.Oid,
 			"owner": file.Owner,
+			"name":  file.Name,
 			"type":  file.Type,
 		}
 	} else {
