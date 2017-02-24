@@ -49,6 +49,7 @@ import (
 //	file.owner		S	the owner type.
 //	file.tags		A	the file tag.
 //	file.exec		S	the convter executing status in running/err/done, if the file type is not supported to convert return null.
+//	file_added		I	whether the file record is added in user resource library or not.
 /*
 	The json example result when success.
 	{
