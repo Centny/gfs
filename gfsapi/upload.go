@@ -252,6 +252,6 @@ func (f *FSH) do_base64(hs *routing.HTTPSession, rf *gfsdb.F, name string) error
 	}
 	rf.SHA, rf.MD5, rf.Size = sha_, md5_, size_
 	rf.Filename, rf.Name = name, name
-	rf.EXT = filepath.Ext(name)
+	rf.EXT = strings.ToLower(filepath.Ext(name))
 	return err
 }

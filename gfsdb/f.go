@@ -13,6 +13,16 @@ import (
 )
 
 var MockStartTaskErr int = 0
+var ExternalExecSupported = []string{}
+
+func IsExternalSupported(ext string) bool {
+	for _, supported := range ExternalExecSupported {
+		if ext == supported {
+			return true
+		}
+	}
+	return false
+}
 
 func FOI_F(rf *F) (int, error) {
 	if len(rf.Path) < 1 {
@@ -22,7 +32,8 @@ func FOI_F(rf *F) (int, error) {
 		return 0, util.Err("FOI_F the F.sha/F.md5 is empty ")
 	}
 	rf.Id = bson.NewObjectId().Hex()
-	if ffcm.SRV != nil && ffcm.SRV.MatchArgsV(rf.Id, rf.Id, rf.Path, "", filepath.Ext(rf.Path)) {
+	if IsExternalSupported(rf.EXT) ||
+		(ffcm.SRV != nil && ffcm.SRV.MatchArgsV(rf.Id, rf.Id, rf.Path, "", rf.EXT)) {
 		rf.Exec = ES_RUNNING
 	} else {
 		rf.Exec = ES_NONE
