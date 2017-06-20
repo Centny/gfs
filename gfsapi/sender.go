@@ -53,7 +53,7 @@ func (d *DefaultSender) DoH(hs *routing.HTTPSession, rf *gfsdb.F, etype string, 
 			filename = rf.Name
 		}
 		var header = hs.W.Header()
-		header.Set("Content-Disposition", fmt.Sprintf("attachment; filename=%s", filename))
+		header.Set("Content-Disposition", fmt.Sprintf("attachment; filename=%s; filename*=UTF-8''%s", filename, filename))
 	}
 	slog("DefaultSender do normal http file server(%v) to %v", d.FH, hs.R.URL.Path)
 	d.FH.ServeHTTP(hs.W, hs.R)
