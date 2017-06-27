@@ -122,9 +122,9 @@ func (f *FSH) Up(hs *routing.HTTPSession) routing.HResult {
 		return hs.MsgResErr2(-2, "srv-err", err)
 	}
 	rf.Time, rf.Status = util.Now(), gfsdb.FS_N
-	if pub > 0 {
-		rf.Pub = util.ShortLink(rf.SHA + rf.MD5)
-	}
+	// if pub > 0 {
+	rf.Pub = util.ShortLink(rf.SHA + rf.MD5)
+	// }
 	var uname, uext = rf.Name, rf.EXT
 	updated, err := gfsdb.FOI_F(rf)
 	if err != nil {
